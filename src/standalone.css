@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  background: #142422;
+  color: #e7ece1;
+  font-family: Manrope, Arial, sans-serif;
+}
+#app {
+  max-width: 1500px;
+  margin: auto;
+  padding: 32px 24px;
+}
+@media (max-width: 600px) {
+  #app {
+    padding: 16px 12px;
+  }
+}
