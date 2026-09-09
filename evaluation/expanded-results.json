@@ -1,0 +1,1029 @@
+{
+  "version": 1,
+  "scope": "Separate authored diagnostic for the 120-note expanded corpus. Distinct from the frozen 80-note model comparison.",
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+  "sourceHashes": {
+    "src/data/collections-v2.js": "aab5707dfb43d0ba6cd748530155ba69116324a7e433608d9e81bf3e5a0b8f4a",
+    "evaluation/expanded-probes.js": "606f882026e15db5b7cc61f218e063eb2768628bd3d7a82fe39d983b05f267ae"
+  },
+  "queries": [
+    {
+      "collection": "field-notes",
+      "query": "Waiting passengers need somewhere to escape a sudden downpour.",
+      "relevant": [
+        "f41"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f41",
+          "title": "Shade at the bus stop",
+          "score": 0.5581781763092448
+        },
+        {
+          "id": "f43",
+          "title": "A bicycle that stays dry",
+          "score": 0.3524779590051592
+        },
+        {
+          "id": "f42",
+          "title": "A safe place to cross",
+          "score": 0.2751573685230441
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f44",
+          "title": "Frequent buses need no timetable",
+          "score": 0.2857142857142857
+        },
+        {
+          "id": "f24",
+          "title": "Make boredom possible",
+          "score": 0.14285714285714285
+        },
+        {
+          "id": "f41",
+          "title": "Shade at the bus stop",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Help people get across the road in shorter stages.",
+      "relevant": [
+        "f42"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f42",
+          "title": "A safe place to cross",
+          "score": 0.5601532032144593
+        },
+        {
+          "id": "f04",
+          "title": "The evening route",
+          "score": 0.5255575883900991
+        },
+        {
+          "id": "f22",
+          "title": "The small finish",
+          "score": 0.3513143650530851
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f42",
+          "title": "A safe place to cross",
+          "score": 0.42857142857142855
+        },
+        {
+          "id": "f06",
+          "title": "A bench with a back",
+          "score": 0.2857142857142857
+        },
+        {
+          "id": "f04",
+          "title": "The evening route",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "I need a secure covered place for my bike at the office.",
+      "relevant": [
+        "f43"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f43",
+          "title": "A bicycle that stays dry",
+          "score": 0.5862977308058929
+        },
+        {
+          "id": "f41",
+          "title": "Shade at the bus stop",
+          "score": 0.3185472861643579
+        },
+        {
+          "id": "f45",
+          "title": "Keep rain where it falls",
+          "score": 0.2758725201529245
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f43",
+          "title": "A bicycle that stays dry",
+          "score": 0.42857142857142855
+        },
+        {
+          "id": "f14",
+          "title": "Invisible maintenance",
+          "score": 0.14285714285714285
+        },
+        {
+          "id": "f19",
+          "title": "A place for loose thoughts",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Public transport would be easier if I never needed to check a schedule.",
+      "relevant": [
+        "f44"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f44",
+          "title": "Frequent buses need no timetable",
+          "score": 0.509510107043126
+        },
+        {
+          "id": "f08",
+          "title": "The last kilometer",
+          "score": 0.39110431546160057
+        },
+        {
+          "id": "f04",
+          "title": "The evening route",
+          "score": 0.33232229115654593
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f06",
+          "title": "A bench with a back",
+          "score": 0.1111111111111111
+        },
+        {
+          "id": "f08",
+          "title": "The last kilometer",
+          "score": 0.1111111111111111
+        },
+        {
+          "id": "f14",
+          "title": "Invisible maintenance",
+          "score": 0.1111111111111111
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "The hard surface outside should let water soak through.",
+      "relevant": [
+        "f45"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f45",
+          "title": "Keep rain where it falls",
+          "score": 0.33042726435506975
+        },
+        {
+          "id": "f43",
+          "title": "A bicycle that stays dry",
+          "score": 0.275754381761152
+        },
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "score": 0.27548062924177963
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f01",
+          "title": "Shade is infrastructure",
+          "score": 0.25
+        },
+        {
+          "id": "f03",
+          "title": "Room for rain",
+          "score": 0.125
+        },
+        {
+          "id": "f16",
+          "title": "The commons needs edges",
+          "score": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "How can neighbors share food they will not use?",
+      "relevant": [
+        "f48"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f48",
+          "title": "A place for surplus food",
+          "score": 0.5236359523239861
+        },
+        {
+          "id": "f50",
+          "title": "Trade skills across generations",
+          "score": 0.4395382952559009
+        },
+        {
+          "id": "f16",
+          "title": "The commons needs edges",
+          "score": 0.406041081674012
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f48",
+          "title": "A place for surplus food",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "score": 0.16666666666666666
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "score": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Teach the owner to do the repair while helping them.",
+      "relevant": [
+        "f49"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f49",
+          "title": "Learn by fixing it together",
+          "score": 0.6917534522423501
+        },
+        {
+          "id": "f47",
+          "title": "Repair instructions beside the object",
+          "score": 0.5962976976109381
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "score": 0.524163621470764
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f49",
+          "title": "Learn by fixing it together",
+          "score": 0.6
+        },
+        {
+          "id": "f47",
+          "title": "Repair instructions beside the object",
+          "score": 0.4
+        },
+        {
+          "id": "f01",
+          "title": "Shade is infrastructure",
+          "score": 0.2
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Tomorrow I will forget where I stopped working.",
+      "relevant": [
+        "f51"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f51",
+          "title": "Leave a restart note",
+          "score": 0.3721445625086974
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "score": 0.21044006452125424
+        },
+        {
+          "id": "f20",
+          "title": "Walking around a problem",
+          "score": 0.19833987077273457
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "score": 0.25
+        },
+        {
+          "id": "f19",
+          "title": "A place for loose thoughts",
+          "score": 0.25
+        },
+        {
+          "id": "f49",
+          "title": "Learn by fixing it together",
+          "score": 0.25
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "The meeting should end with one agreed choice and somebody responsible.",
+      "relevant": [
+        "f53"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f53",
+          "title": "Give a meeting one decision",
+          "score": 0.46225736037461695
+        },
+        {
+          "id": "f15",
+          "title": "A seat at the meeting",
+          "score": 0.3648675517889102
+        },
+        {
+          "id": "f22",
+          "title": "The small finish",
+          "score": 0.2261409075592652
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f53",
+          "title": "Give a meeting one decision",
+          "score": 0.375
+        },
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "score": 0.25
+        },
+        {
+          "id": "f09",
+          "title": "Borrow a drill",
+          "score": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Find out whether the files I copied can actually be recovered.",
+      "relevant": [
+        "f56"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f56",
+          "title": "Try restoring a backup",
+          "score": 0.5282071478670461
+        },
+        {
+          "id": "f32",
+          "title": "An archive can migrate",
+          "score": 0.4255779654131825
+        },
+        {
+          "id": "f26",
+          "title": "Three copies, two places",
+          "score": 0.370530113077377
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "score": 0.14285714285714285
+        },
+        {
+          "id": "f56",
+          "title": "Try restoring a backup",
+          "score": 0.14285714285714285
+        },
+        {
+          "id": "f58",
+          "title": "Flowers through the whole season",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Keep an unedited version of the conversation before removing background noise.",
+      "relevant": [
+        "f57"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f57",
+          "title": "Keep the original recording",
+          "score": 0.5173070434478284
+        },
+        {
+          "id": "f31",
+          "title": "Keep the process notes",
+          "score": 0.29063957863595336
+        },
+        {
+          "id": "f52",
+          "title": "Put messages in a window",
+          "score": 0.28137597849492957
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f57",
+          "title": "Keep the original recording",
+          "score": 0.375
+        },
+        {
+          "id": "f53",
+          "title": "Give a meeting one decision",
+          "score": 0.25
+        },
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "score": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Connect backyards so animals can travel between them.",
+      "relevant": [
+        "f59"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "f59",
+          "title": "A gap under the garden fence",
+          "score": 0.5765090557322111
+        },
+        {
+          "id": "f35",
+          "title": "Following a bird",
+          "score": 0.41220548078534136
+        },
+        {
+          "id": "f16",
+          "title": "The commons needs edges",
+          "score": 0.3424332009815491
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f03",
+          "title": "Room for rain",
+          "score": 0.16666666666666666
+        },
+        {
+          "id": "f11",
+          "title": "Recipes without an owner",
+          "score": 0.16666666666666666
+        },
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "score": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Let me see which records will be removed before I commit.",
+      "relevant": [
+        "s41"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s41",
+          "title": "Preview before a lasting change",
+          "score": 0.3281766603917831
+        },
+        {
+          "id": "s02",
+          "title": "Show the way back",
+          "score": 0.29109789983043427
+        },
+        {
+          "id": "s56",
+          "title": "A retry should be safe",
+          "score": 0.27698775009877025
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "score": 0.2857142857142857
+        },
+        {
+          "id": "s41",
+          "title": "Preview before a lasting change",
+          "score": 0.2857142857142857
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "The writing must survive if the internet stops working.",
+      "relevant": [
+        "s44",
+        "s43"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s44",
+          "title": "Keep working without a connection",
+          "score": 0.3613843237050557
+        },
+        {
+          "id": "s35",
+          "title": "A worker takes the heavy part",
+          "score": 0.31046819350375915
+        },
+        {
+          "id": "s43",
+          "title": "Show what has been saved",
+          "score": 0.31023355609831527
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s34",
+          "title": "Old work must not win",
+          "score": 0.2857142857142857
+        },
+        {
+          "id": "s10",
+          "title": "The whole task by keys",
+          "score": 0.14285714285714285
+        },
+        {
+          "id": "s27",
+          "title": "Type has a working distance",
+          "score": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Buttons are hard to hit accurately with a finger.",
+      "relevant": [
+        "s45"
+      ],
+      "rank": 2,
+      "top3": [
+        {
+          "id": "s13",
+          "title": "A thumb-sized promise",
+          "score": 0.6383025465379939
+        },
+        {
+          "id": "s45",
+          "title": "A target large enough to tap",
+          "score": 0.6084009063887243
+        },
+        {
+          "id": "s50",
+          "title": "Study the first attempt",
+          "score": 0.36026817000556555
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s45",
+          "title": "A target large enough to tap",
+          "score": 0.4
+        },
+        {
+          "id": "s09",
+          "title": "The spoken interface",
+          "score": 0.2
+        },
+        {
+          "id": "s17",
+          "title": "Measure the useful thing",
+          "score": 0.2
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "I cannot tell what the unlabeled symbol does.",
+      "relevant": [
+        "s46"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s46",
+          "title": "Label the icon with words",
+          "score": 0.4836214186949358
+        },
+        {
+          "id": "s31",
+          "title": "The transition explains itself",
+          "score": 0.3261419911913901
+        },
+        {
+          "id": "s28",
+          "title": "The image earns its space",
+          "score": 0.29833210636919977
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "score": 0.2
+        },
+        {
+          "id": "s11",
+          "title": "Color needs a companion",
+          "score": 0.2
+        },
+        {
+          "id": "s12",
+          "title": "Motion with an off switch",
+          "score": 0.2
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Where will the next key press go?",
+      "relevant": [
+        "s47"
+      ],
+      "rank": 3,
+      "top3": [
+        {
+          "id": "s10",
+          "title": "The whole task by keys",
+          "score": 0.5276291040229083
+        },
+        {
+          "id": "s48",
+          "title": "Move focus with the dialog",
+          "score": 0.4042580621186197
+        },
+        {
+          "id": "s47",
+          "title": "Keep the focus visible",
+          "score": 0.3182001573875745
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s08",
+          "title": "A receipt for change",
+          "score": 0.25
+        },
+        {
+          "id": "s25",
+          "title": "Spend pixels on the idea",
+          "score": 0.25
+        },
+        {
+          "id": "s55",
+          "title": "Cache work that has not changed",
+          "score": 0.25
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Return keyboard control to the opener after a popup closes.",
+      "relevant": [
+        "s48"
+      ],
+      "rank": 2,
+      "top3": [
+        {
+          "id": "s10",
+          "title": "The whole task by keys",
+          "score": 0.5804859857016791
+        },
+        {
+          "id": "s48",
+          "title": "Move focus with the dialog",
+          "score": 0.5798556543830066
+        },
+        {
+          "id": "s47",
+          "title": "Keep the focus visible",
+          "score": 0.30675588143754573
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s48",
+          "title": "Move focus with the dialog",
+          "score": 0.5714285714285714
+        },
+        {
+          "id": "s10",
+          "title": "The whole task by keys",
+          "score": 0.42857142857142855
+        },
+        {
+          "id": "s47",
+          "title": "Keep the focus visible",
+          "score": 0.2857142857142857
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Learn from the first unassisted attempt to use a prototype.",
+      "relevant": [
+        "s50"
+      ],
+      "rank": 2,
+      "top3": [
+        {
+          "id": "s29",
+          "title": "A prototype asks one question",
+          "score": 0.5032828924144522
+        },
+        {
+          "id": "s50",
+          "title": "Study the first attempt",
+          "score": 0.4993365834475926
+        },
+        {
+          "id": "s52",
+          "title": "Test one risky assumption",
+          "score": 0.4624210982535437
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s50",
+          "title": "Study the first attempt",
+          "score": 0.6666666666666666
+        },
+        {
+          "id": "s52",
+          "title": "Test one risky assumption",
+          "score": 0.5
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "score": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Do not confuse the research evidence with our explanation for it.",
+      "relevant": [
+        "s51"
+      ],
+      "rank": 2,
+      "top3": [
+        {
+          "id": "s21",
+          "title": "A hypothesis can lose",
+          "score": 0.47701063172796715
+        },
+        {
+          "id": "s51",
+          "title": "Separate an observation from a guess",
+          "score": 0.459512119388557
+        },
+        {
+          "id": "s19",
+          "title": "Five careful conversations",
+          "score": 0.2598971094615459
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s06",
+          "title": "Confidence is not certainty",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "s21",
+          "title": "A hypothesis can lose",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "s51",
+          "title": "Separate an observation from a guess",
+          "score": 0.3333333333333333
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "The new algorithm needs to beat a basic reference on unseen examples.",
+      "relevant": [
+        "s53"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s53",
+          "title": "Compare against a simple baseline",
+          "score": 0.5131461336267247
+        },
+        {
+          "id": "s50",
+          "title": "Study the first attempt",
+          "score": 0.25482309931671815
+        },
+        {
+          "id": "s28",
+          "title": "The image earns its space",
+          "score": 0.2530297543124997
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s53",
+          "title": "Compare against a simple baseline",
+          "score": 0.375
+        },
+        {
+          "id": "s11",
+          "title": "Color needs a companion",
+          "score": 0.125
+        },
+        {
+          "id": "s14",
+          "title": "Zoom is a normal use",
+          "score": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "A repeated network attempt must not add the same item twice.",
+      "relevant": [
+        "s56"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s56",
+          "title": "A retry should be safe",
+          "score": 0.5046930389698535
+        },
+        {
+          "id": "s34",
+          "title": "Old work must not win",
+          "score": 0.39292839971929877
+        },
+        {
+          "id": "s33",
+          "title": "The slow network is real",
+          "score": 0.3262086618461533
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s34",
+          "title": "Old work must not win",
+          "score": 0.2222222222222222
+        },
+        {
+          "id": "s56",
+          "title": "A retry should be safe",
+          "score": 0.2222222222222222
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "score": 0.1111111111111111
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Stop background computation after leaving the screen.",
+      "relevant": [
+        "s57"
+      ],
+      "rank": 1,
+      "top3": [
+        {
+          "id": "s57",
+          "title": "Clean up when a view closes",
+          "score": 0.5597060559761476
+        },
+        {
+          "id": "s35",
+          "title": "A worker takes the heavy part",
+          "score": 0.5418827876523815
+        },
+        {
+          "id": "s47",
+          "title": "Keep the focus visible",
+          "score": 0.36993749930665126
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s35",
+          "title": "A worker takes the heavy part",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "s57",
+          "title": "Clean up when a view closes",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "s03",
+          "title": "Permission at the moment",
+          "score": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "An empty collection needs an obvious first step.",
+      "relevant": [
+        "s60"
+      ],
+      "rank": 2,
+      "top3": [
+        {
+          "id": "s30",
+          "title": "An honest empty state",
+          "score": 0.5716886980398171
+        },
+        {
+          "id": "s60",
+          "title": "Make the empty state useful",
+          "score": 0.5466688619648384
+        },
+        {
+          "id": "s20",
+          "title": "The missing participants",
+          "score": 0.23559755229107426
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s30",
+          "title": "An honest empty state",
+          "score": 0.5
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "score": 0.3333333333333333
+        },
+        {
+          "id": "s60",
+          "title": "Make the empty state useful",
+          "score": 0.3333333333333333
+        }
+      ]
+    }
+  ],
+  "hitAt1": 18,
+  "hitAt3": 24,
+  "count": 24,
+  "seed": {
+    "file": "meaning-notes-v2-96a7d40cd4df.json",
+    "sha256": "96a7d40cd4df8835950b970b28aba8f6d27adb21a14124232a22b27d7d936b84",
+    "bytes": 544184
+  }
+}

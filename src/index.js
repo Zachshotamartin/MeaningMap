@@ -1,5 +1,5 @@
-import { collections, MODEL, textForNote } from "./data/collections.js";
-import precomputed from "./data/embeddings.json";
+import { MODEL, textForNote } from "./data/collections.js";
+import { SEED_PATH } from "./data/seed-path.js";
 import {
   rankSemantic,
   rankKeywords,
@@ -17,14 +17,14 @@ export const metadata = {
     "A notebook you can search by meaning. Explore real sentence embeddings, compare literal matches, and add your own ideas.",
   instructions: [
     "Choose a collection, try an example, or search in your own words.",
-    "Read the saved text and compare semantic results with literal word matches for the same query.",
-    "Open Explore the note map for a spatial view. Use arrow keys between notes; Fit map restores the overview.",
-    "Add or import notes in Your collection, then export to keep your work.",
+    "Search an idea, then select a dot or a closest match to read the saved note.",
+    "Arrow keys move between map notes. Fit map restores the overview.",
+    "Add or import notes in Your notes, then export to keep your work.",
   ],
   limitations: [
     "English sentence embeddings can miss nuance and reflect training bias. Cosine similarity is not confidence.",
     "The PCA map compresses 384 dimensions into two. Visual distance is approximate; ranking uses full embeddings.",
-    "Fresh text loads a 23 MB pretrained model and 11 MB runtime on demand, then runs locally. No note text is transmitted.",
+    "Opening this tool warms a 23 MB pretrained model and 11 MB runtime, then search runs locally. No note text is transmitted.",
     "Collections hold up to 100 notes. Notes are limited to 1,800 characters; the model truncates at 512 tokens. Export your work before closing the tab.",
   ],
   technique:
@@ -49,72 +49,34 @@ export function mountExperiment(element, options = {}) {
   const uid = `mm-${++mounts}`;
   const root = el("section", "meaning-map");
   root.setAttribute("aria-label", "Meaning Map experiment");
-  root.innerHTML = `<header class="mm-header"><div><p class="mm-eyebrow">A SEMANTIC NOTEBOOK / EXPERIMENT 02</p><h2>Meaning Map<span aria-hidden="true"> ↗</span></h2><p class="mm-intro">Find the thought, even when the words are different.</p></div><div class="mm-model"><span class="mm-model-dot"></span><span>MiniLM · 384 dimensions<br><small>Pretrained model · local inference</small></span></div></header>
- <section class="mm-guide" aria-label="How to read Meaning Map"><p class="mm-guide-intro"><strong>Explore notes by meaning.</strong> An idea about cooling buildings can lead to “The white roof,” a note about reflective roofs. Try an example, then describe an idea in your own words. The model is pretrained; adding notes needs no retraining.</p><div class="mm-guide-key"><p><strong>Read the map.</strong> Each dot is a note. Colors are author-assigned groups. Lines connect the selected note to its closest matches (up to three) in the full 384-dimensional space. Distances on this 2D map are approximate.</p><p><strong>Compare the search.</strong> Semantic compares meaning; Keyword compares shared words. Similarity scores describe how closely ideas match, not a probability that an answer is correct.</p></div><details class="mm-guide-details"><summary>The model, the 80 sample notes, and the quality check</summary><div><p><strong>The encoder is already trained.</strong> We use the pretrained MiniLM sentence model. Its creators fine-tuned it using a dataset of more than one billion sentence pairs. The 80 notes in our two sample collections are the things you search, not the data used to train the encoder. <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2#background" target="_blank" rel="noreferrer">Read the official model card</a>.</p><p><strong>Adding a note needs no retraining.</strong> The model turns its text into 384 numbers, called an embedding, locally in your browser. Your query goes through the same model; search compares these full vectors. Colors come from the notes’ authored group labels, not AI-generated clusters.</p><p><strong>A small check, not a guarantee.</strong> We froze 64 new test queries before comparing three compact encoders. MiniLM found a relevant note first in <strong>37/44</strong> paraphrase and synonym cases, and within the first three in <strong>42/44</strong>. BGE-small tied those results; E5-small matched the first-result score but missed more top-three results. We kept the smaller MiniLM download. This is an authored diagnostic, not an independent benchmark or a guarantee. Four exact note IDs are handled by direct lookup, separately from semantic search. Twelve unrelated queries were also tested: similarity search still returns nearby notes, so results are suggestions from this collection, not answers to every question.</p></div></details></section>
- <div class="mm-searchbar"><label class="mm-collection-label">Collection<select data-ui="collection"></select></label><form class="mm-query-form"><label for="${uid}-query">Search an idea</label><div class="mm-query-row"><input id="${uid}-query" data-ui="query" maxlength="600" autocomplete="off" placeholder="Describe what you are looking for…" required><button class="mm-primary" type="submit">Find connections</button></div></form></div>
- <div class="mm-example-row"><span class="mm-small">Try a thought</span><div data-ui="examples" class="mm-examples"></div></div>
- <div class="mm-workspace"><div class="mm-map-column"><div class="mm-map-panel"><div class="mm-map-heading"><div><h3>Semantic landscape</h3><span data-ui="map-count" class="mm-small"></span></div><div class="mm-map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit">Fit map</button></div></div><div data-ui="map" class="mm-map" tabindex="0" role="group" aria-label="Note map. Select a note with Tab, navigate notes with arrow keys. When the map has focus, arrows pan and plus or minus zoom."><svg class="mm-edges" aria-hidden="true"></svg><div data-ui="nodes" class="mm-nodes"></div><div data-ui="labels" class="mm-labels" aria-hidden="true"></div><div class="mm-map-caption">NEARBY IDEAS, DIFFERENT WORDS</div></div><div data-ui="legend" class="mm-legend"></div><p class="mm-map-footnote">2D PCA projection · distances are approximate. Rankings use all 384 dimensions.</p></div><article data-ui="detail" class="mm-detail" aria-label="Selected note"></article></div>
- <aside class="mm-results"><div class="mm-results-header"><h3>Closest thoughts</h3><span data-ui="result-count" class="mm-small"></span></div><div class="mm-tabs" role="group" aria-label="Ranking method"><button data-mode="semantic" aria-pressed="true">Semantic</button><button data-mode="keyword" aria-pressed="false">Keyword</button></div><p data-ui="ranking-info" class="mm-ranking-info"></p><ol data-ui="results" class="mm-result-list"></ol><p class="mm-score-note">Cosine similarity is a relationship between vectors, not a probability or a factual judgment.</p></aside></div>
- <div class="mm-statusbar"><p data-ui="status" role="status" aria-live="polite">Examples are ready. Fresh text loads the model only when you need it.</p><progress data-ui="progress" max="100" value="0" hidden aria-label="Model loading progress"></progress><button data-action="cancel" hidden>Cancel</button><button data-action="retry" hidden>Retry</button><button data-action="load">Load local model</button></div>
- <div class="mm-inference-stats" aria-label="Local inference statistics"><dl><div><dt>Model</dt><dd data-ui="model-state">Not loaded</dd></div><div><dt>Completed requests</dt><dd data-ui="request-count">0</dd></div><div><dt>Notes embedded</dt><dd data-ui="note-count">0</dd></div><div><dt>Last fresh query</dt><dd data-ui="query-time">Not run yet</dd></div></dl><p>This visit only. Requests include queries and note batches. Query time includes loading when needed. Pretrained encoder; no training.</p></div>
- <details class="mm-collection-editor"><summary>Your collection <span class="mm-small">Add notes, import, or take a copy</span></summary><div class="mm-editor-body"><form class="mm-add-form"><h3>Add a thought</h3><label>Title<input name="title" required maxlength="100" placeholder="A short, useful title"></label><label>Note<textarea name="text" required maxlength="1800" rows="3" placeholder="Paste a thought or a paragraph. It stays in this browser tab."></textarea></label><label>Group<input name="group" maxlength="40" value="My notes" required></label><button class="mm-primary" type="submit">Embed & add note</button></form><div class="mm-file-tools"><h3>Make it yours</h3><p>Up to 100 notes per collection. Added notes stay in this tab until you export them.</p><button data-action="export">Export collection (.json)</button><label class="mm-file-label">Import collection<input data-ui="import" type="file" accept="application/json,.json"></label><button data-action="reset">Reset to preset</button><p class="mm-small">Import validates the text and regenerates every embedding with the same model. Existing notes are replaced only after success.</p></div></div></details>
- <footer class="mm-footer">Original notes + real pretrained embeddings. <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2" target="_blank" rel="noreferrer">MiniLM model · Apache 2.0</a><span>No server inference. No API key.</span></footer>`;
+  root.innerHTML = `<header class="mm-header"><div><p class="mm-eyebrow">A SEMANTIC NOTEBOOK</p><h2>Meaning Map</h2><p class="mm-intro">Find a note even when you remember different words.</p></div></header>
+  <div class="mm-searchbar"><label>Collection<select data-ui="collection"></select></label><form class="mm-query-form"><label for="${uid}-query">Search your notes</label><div class="mm-query-row"><input id="${uid}-query" data-ui="query" maxlength="600" autocomplete="off" placeholder="Describe an idea…" required><button class="mm-primary" type="submit">Find connections</button></div></form></div>
+  <div class="mm-example-row"><div data-ui="examples" class="mm-examples"></div></div>
+  <div class="mm-statusbar"><p data-ui="status" role="status" aria-live="polite">Loading notes and warming local search…</p><progress data-ui="progress" max="100" hidden aria-label="Model loading progress"></progress><button data-action="cancel" hidden>Cancel</button><button data-action="retry" hidden>Retry</button></div>
+  <div class="mm-workspace"><section class="mm-map-section mm-map-panel" aria-label="Semantic note map"><div class="mm-map-heading"><div><h3>Notes by meaning</h3><span data-ui="map-count" class="mm-small">Loading notes…</span></div><div class="mm-map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit">Fit map</button></div></div><div data-ui="map" class="mm-map" tabindex="0" role="group" aria-label="Note map. Tab selects a note; arrow keys navigate. With the map focused, arrows pan and plus or minus zoom."><svg class="mm-edges" aria-hidden="true"></svg><div data-ui="nodes" class="mm-nodes"></div><div data-ui="labels" class="mm-labels" aria-hidden="true"></div><div class="mm-map-caption">NEARBY IDEAS, DIFFERENT WORDS</div></div><div data-ui="legend" class="mm-legend"></div><p class="mm-map-footnote">Each dot is a note. Colors are authored groups. 2D spacing is approximate.</p></section>
+  <aside class="mm-results"><div class="mm-tabs" role="group" aria-label="Ranking method"><button data-mode="semantic" aria-pressed="true">Semantic</button><button data-mode="keyword" aria-pressed="false">Keyword</button></div><article data-ui="detail" class="mm-detail" aria-label="Selected note"></article><div class="mm-results-header"><h3>Closest matches</h3><span data-ui="result-count" class="mm-small"></span></div><p data-ui="ranking-info" class="mm-ranking-info"></p><ol data-ui="results" class="mm-result-list"></ol><details class="mm-comparison" aria-label="Compare search methods for the same query"><summary data-ui="comparison-heading">Compare with words</summary><p data-ui="comparison-query" class="mm-small"></p><ol data-ui="comparison-results"></ol><p data-ui="comparison-note" class="mm-small"></p></details><p class="mm-score-note">Similarity is not confidence. Search finds saved notes, not generated answers.</p></aside></div>
+  <details class="mm-collection-editor" hidden><summary>Your notes <span class="mm-small">Add · browse · import · export</span></summary><p data-ui="scope" class="mm-small"></p><details class="mm-corpus"><summary data-ui="browse-label">Browse collection</summary><p data-ui="corpus-description" class="mm-small"></p><div data-ui="corpus-notes" class="mm-corpus-notes"></div></details><div class="mm-editor-body"><form class="mm-add-form"><h3>Add a note</h3><label>Title<input name="title" required maxlength="100" placeholder="A short, useful title"></label><label>Note<textarea name="text" required maxlength="1800" rows="3" placeholder="Paste a thought or a paragraph."></textarea></label><label>Group<input name="group" maxlength="40" value="My notes" required></label><button class="mm-primary" type="submit">Embed & add note</button></form><div class="mm-file-tools"><button data-action="export">Export collection (.json)</button><label class="mm-file-label">Import collection<input data-ui="import" type="file" accept="application/json,.json"></label><button data-action="reset">Reset to preset</button><p class="mm-small">Up to 100 notes. Text stays in this tab until you export. Import validates text and regenerates embeddings before replacing your collection.</p></div></div></details>
+  <details class="mm-guide-details"><summary>How it works</summary><div><p><strong>Meaning, not just shared words.</strong> An idea about cooling buildings can find a note about reflective roofs. Semantic search compares 384-number sentence vectors; Keyword counts exact shared words. Scores are similarities, not probabilities. Neither method can find information absent from your notes.</p><p><strong>Reading the map.</strong> Each dot is a note; colors are authored groups. Lines show up to three nearest notes in the full embedding space. The 2D PCA map compresses those vectors, so its distances are approximate.</p><p><strong>Pretrained, then used locally.</strong> MiniLM was trained upstream using more than a billion sentence pairs. These 120 notes are search material, not its training set. New notes need no retraining. The model warms automatically when this tool opens; your text stays in the browser. <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2#background" target="_blank" rel="noreferrer">Official model card</a>.</p><p><strong>What we checked.</strong> On 24 separately written queries for these 120 notes, a relevant note ranked first in 18 cases and within three in all 24. This is a small authored diagnostic, not a guarantee. An earlier frozen 80-note comparison gave MiniLM and BGE-small the same paraphrase results, so we kept the smaller model. Exact IDs use direct lookup.</p></div></details>
+  <details class="mm-activity"><summary>Model & activity</summary><div class="mm-inference-stats" aria-label="Local inference statistics"><dl><div><dt>Model</dt><dd data-ui="model-state">Not loaded</dd></div><div><dt>Completed requests</dt><dd data-ui="request-count">0</dd></div><div><dt>Notes embedded</dt><dd data-ui="note-count">0</dd></div><div><dt>Last fresh query</dt><dd data-ui="query-time">Not run yet</dd></div></dl><p>This visit only. Warmup and cached examples do not count as embedding requests. Query time includes loading when needed. Pretrained inference; no training.</p></div></details>
+  <footer class="mm-footer"><span>MiniLM · local inference · 120 sample notes</span></footer>`;
   if (options.embedded) {
     root.classList.add("mm-embedded");
     root.querySelector(".mm-header").remove();
   }
-  // Search is the primary task. Keep the spatial view and background reading
-  // available without placing them ahead of the note the visitor is seeking.
-  const guide = root.querySelector(".mm-guide");
-  guide.querySelector(".mm-guide-intro").textContent =
-    "Find a saved note from an idea you remember. For example, searching for cooler buildings can find a note about reflective roofs. Results show the original text, so you can judge the connection.";
-  const guideDetails = guide.querySelector(".mm-guide-details");
-  guideDetails.querySelector("summary").textContent =
-    "How semantic search works, and what we tested";
-  guideDetails
-    .querySelector("div")
-    .prepend(guide.querySelector(".mm-guide-key"));
-  root.insertBefore(guideDetails, root.querySelector(".mm-footer"));
-  const mapSection = el("details", "mm-map-section");
-  mapSection.innerHTML =
-    '<summary>Explore the note map <span class="mm-small">Optional spatial overview</span></summary>';
-  mapSection.append(root.querySelector(".mm-map-panel"));
-  root.querySelector(".mm-workspace").after(mapSection);
-  root.insertBefore(
-    root.querySelector(".mm-statusbar"),
-    root.querySelector(".mm-workspace"),
-  );
-  const comparison = el("section", "mm-comparison");
-  comparison.setAttribute(
-    "aria-label",
-    "Compare search methods for the same query",
-  );
-  comparison.innerHTML =
-    '<h3 data-ui="comparison-heading">Literal word matches</h3><p data-ui="comparison-query" class="mm-small"></p><ol data-ui="comparison-results"></ol><p data-ui="comparison-note" class="mm-small"></p>';
-  root.querySelector(".mm-map-column").append(comparison);
-  const scope = el("div", "mm-scope");
-  scope.innerHTML =
-    '<p data-ui="scope" class="mm-small"></p><button data-action="your-notes">Use your own notes</button>';
-  root.querySelector(".mm-searchbar").after(scope);
-  const corpus = el("details", "mm-corpus");
-  corpus.innerHTML =
-    '<summary data-ui="browse-label">Browse this collection</summary><p data-ui="corpus-description" class="mm-small"></p><div data-ui="corpus-notes" class="mm-corpus-notes"></div>';
-  root.querySelector(".mm-example-row").after(corpus);
-  const queryHeading = el("p", "mm-query-heading");
-  queryHeading.dataset.ui = "query-heading";
-  root.querySelector(".mm-workspace").before(queryHeading);
-  root.querySelector(".mm-results-header h3").textContent = "Matching notes";
   element.append(root);
   const $ = (name) => root.querySelector(`[data-ui="${name}"]`);
   const act = (name) => root.querySelector(`[data-action="${name}"]`);
   const collectionSelect = $("collection"),
     queryInput = $("query"),
     map = $("map");
-  for (const c of collections) {
-    const o = el("option", "", c.title);
-    o.value = c.id;
-    collectionSelect.append(o);
-  }
+  let collections = [],
+    precomputed = null,
+    ready = false,
+    warming = false,
+    warmingPromise = null,
+    seedController = null,
+    seedError = null,
+    modelError = null;
   let collection,
     embeddings,
     points,
@@ -162,6 +124,10 @@ export function mountExperiment(element, options = {}) {
     document.baseURI,
   ).href.replace(/\/?$/, "/");
   const status = (message, error = false) => {
+    if (seedError) {
+      message = `Could not load the notes. ${seedError.message} Retry to load the collection.`;
+      error = true;
+    }
     $("status").textContent = message;
     $("status").classList.toggle("mm-error", error);
   };
@@ -169,10 +135,11 @@ export function mountExperiment(element, options = {}) {
     busy = value;
     act("cancel").hidden = !value;
     $("progress").hidden = !value;
-    root.querySelector(".mm-query-form button").disabled = value;
-    root.querySelector(".mm-add-form button").disabled = value;
-    collectionSelect.disabled = value;
-    act("load").hidden = value || loaded;
+    root.querySelector(".mm-query-form button").disabled =
+      !ready || (value && !warming);
+    root.querySelector(".mm-add-form button").disabled =
+      !ready || (value && !warming);
+    collectionSelect.disabled = !ready || (value && !warming);
   }
   function cancel(
     message = "Cancelled. Your collection is unchanged.",
@@ -180,6 +147,8 @@ export function mountExperiment(element, options = {}) {
   ) {
     if (invalidate) operation++;
     sequence++;
+    warming = false;
+    warmingPromise = null;
     worker?.terminate();
     worker = null;
     loaded = false;
@@ -195,17 +164,17 @@ export function mountExperiment(element, options = {}) {
   }
   function run(type, texts = [], purpose = "notes") {
     if (disposed) return Promise.reject(new Error("cancelled"));
-    if (busy) cancel(undefined, false);
+    if (busy && !warming) cancel(undefined, false);
     const id = ++sequence;
     busyState(true);
     inference.modelState = loaded ? "Ready" : "Loading";
     renderInferenceStats();
-    act("retry").hidden = true;
+    act("retry").hidden = !seedError;
     $("progress").removeAttribute("value");
     status(
       loaded
         ? "Computing sentence embeddings locally…"
-        : "Loading the local model and runtime (about 34 MB on first use)…",
+        : "Warming local search…",
     );
     if (!worker) {
       worker = new Worker(new URL("./embedding.worker.js", import.meta.url), {
@@ -216,9 +185,7 @@ export function mountExperiment(element, options = {}) {
         if (data.type === "progress") {
           const p = data.progress;
           if (p.status === "progress") {
-            status(
-              `Loading ${p.file?.includes("onnx") ? "sentence model" : p.file || "model"} · ${Math.round(p.progress || 0)}%`,
-            );
+            status(`Warming local search · ${Math.round(p.progress || 0)}%`);
             $("progress").value = p.progress || 0;
           } else if (p.status === "embedding") {
             loaded = true;
@@ -238,7 +205,6 @@ export function mountExperiment(element, options = {}) {
           loaded = false;
           inference.modelState = "Error";
           renderInferenceStats();
-          act("load").hidden = false;
           job?.reject(new Error(data.message));
         } else {
           if (job?.type !== "project") loaded = true;
@@ -249,7 +215,6 @@ export function mountExperiment(element, options = {}) {
               inference.notesEmbedded += data.embeddings.length;
           }
           renderInferenceStats();
-          act("load").hidden = loaded;
           job?.resolve(data);
         }
       };
@@ -284,11 +249,103 @@ export function mountExperiment(element, options = {}) {
     retry = again;
     act("retry").hidden = false;
   }
+  function warmModel() {
+    if (loaded) return Promise.resolve();
+    if (warmingPromise) return warmingPromise;
+    modelError = null;
+    warming = true;
+    const promise = run("load")
+      .then(() => {
+        if (!disposed)
+          status(ready ? "Ready · local search." : "Loading notes…");
+      })
+      .finally(() => {
+        if (warmingPromise === promise) {
+          warmingPromise = null;
+          warming = false;
+          if (!disposed) busyState(false);
+        }
+      });
+    warmingPromise = promise;
+    return promise;
+  }
+  function warmAutomatically() {
+    return warmModel().catch((error) => {
+      if (error.message === "cancelled" || disposed) return;
+      modelError = error;
+      reportError(error, retryStartup);
+    });
+  }
+  function retryStartup() {
+    if (!ready) loadSeed();
+    return warmAutomatically();
+  }
+  async function loadSeed() {
+    seedController?.abort();
+    seedError = null;
+    const controller = new AbortController();
+    seedController = controller;
+    try {
+      const response = await fetch(new URL(SEED_PATH, assetBase), {
+        signal: controller.signal,
+      });
+      if (!response.ok)
+        throw new Error(`Notes could not load (${response.status}).`);
+      const seed = await response.json();
+      if (disposed || seedController !== controller) return;
+      if (
+        seed.version !== 2 ||
+        seed.model !== MODEL ||
+        seed.dimensions !== 384 ||
+        !seed.collections
+      )
+        throw new Error("The note data does not match this model.");
+      const next = Object.values(seed.collections);
+      if (
+        next.length !== 2 ||
+        next.some(
+          (d) =>
+            !d.collection?.notes?.length ||
+            d.embeddings?.length !== d.collection.notes.length ||
+            d.points?.length !== d.collection.notes.length ||
+            d.embeddings.some(
+              (v) => v.length !== 384 || !v.every(Number.isFinite),
+            ) ||
+            d.points.some((p) => p.length !== 2 || !p.every(Number.isFinite)),
+        )
+      )
+        throw new Error("The note data is incomplete.");
+      precomputed = seed;
+      collections = next.map((d) => d.collection);
+      collectionSelect.replaceChildren(
+        ...collections.map((c) => {
+          const option = el("option", "", c.title);
+          option.value = c.id;
+          return option;
+        }),
+      );
+      ready = true;
+      root.classList.add("mm-ready");
+      root.querySelector(".mm-collection-editor").hidden = false;
+      reset(collections[0].id);
+      busyState(busy);
+      if (modelError) reportError(modelError, retryStartup);
+    } catch (error) {
+      if (
+        !disposed &&
+        seedController === controller &&
+        error.name !== "AbortError"
+      ) {
+        seedError = error;
+        reportError(error, retryStartup);
+      }
+    }
+  }
   function reset(id = collectionSelect.value) {
     act("retry").hidden = true;
     retry = null;
     operation++;
-    if (busy) cancel(undefined, false);
+    if (busy && !warming) cancel(undefined, false);
     collection = structuredClone(
       collections.find((c) => c.id === id) || collections[0],
     );
@@ -308,13 +365,15 @@ export function mountExperiment(element, options = {}) {
     selectionIsExplicit = false;
     render();
     status(
-      "Precomputed example: real MiniLM embeddings, ready without a model download.",
+      loaded
+        ? "Ready · local search."
+        : "Warming local search… examples are ready.",
     );
   }
   function renderExamples() {
     $("examples").replaceChildren();
     for (const [i, q] of collection.examples.entries()) {
-      const b = el("button", "mm-example", q);
+      const b = el("button", "mm-example", collection.exampleLabels?.[i] || q);
       b.type = "button";
       b.title = q;
       b.dataset.example = String(i);
@@ -341,9 +400,6 @@ export function mountExperiment(element, options = {}) {
   }
   function render() {
     const isExact = ranking[0]?.matchKind === "id";
-    $("query-heading").textContent = query
-      ? `Matches for “${query}”`
-      : "Browse your notes";
     const topics = [...new Set(collection.notes.map((n) => n.group))];
     $("scope").textContent =
       `Searches ${collection.notes.length} notes in “${collection.title}”: ${topics.join(", ")}. This collection may not contain what you need.`;
@@ -368,8 +424,8 @@ export function mountExperiment(element, options = {}) {
       : !query
         ? `Browsing the collection from “${collection.notes[0].title}”. Search an idea to rank the whole collection.`
         : mode === "semantic"
-          ? "Ranked by sentence meaning. A higher cosine score means a closer embedding."
-          : "Ranked by exact word overlap after common words are removed. Scores show shared query terms.";
+          ? "Full-vector cosine similarity"
+          : "Exact query-word overlap";
     $("map-count").textContent =
       `${collection.notes.length} notes · ${new Set(collection.notes.map((n) => n.group)).size} groups`;
     $("results").replaceChildren();
@@ -378,7 +434,7 @@ export function mountExperiment(element, options = {}) {
         ? ranking.filter((r) => r.matchKind === "id" || r.score > 0)
         : ranking;
     $("result-count").textContent = matches.length
-      ? `Top ${Math.min(5, matches.length)}`
+      ? `Top ${Math.min(3, matches.length)}`
       : "0 matches";
     if (!matches.length) {
       const empty = el(
@@ -390,7 +446,7 @@ export function mountExperiment(element, options = {}) {
       );
       $("results").append(empty);
     }
-    for (const [position, r] of matches.slice(0, 5).entries()) {
+    for (const [position, r] of matches.slice(0, 3).entries()) {
       const li = el("li");
       const b = el(
         "button",
@@ -404,11 +460,7 @@ export function mountExperiment(element, options = {}) {
         String(position + 1).padStart(2, "0"),
       );
       const content = el("span", "mm-result-copy");
-      content.append(
-        el("strong", "", r.note.title),
-        el("span", "mm-small", `${r.note.id} · ${r.note.group}`),
-        el("span", "mm-result-excerpt", r.note.text),
-      );
+      content.append(el("strong", "", r.note.title));
       const score = el(
         "span",
         "mm-score",
@@ -467,23 +519,9 @@ export function mountExperiment(element, options = {}) {
           ? selected === ranking[0].index
             ? "Opened by exact note ID. No model inference was needed."
             : "A related saved note. Return to the ID match in Matching notes."
-          : `Shared query words: ${overlap.length ? overlap.join(", ") : "none"}. ${queryVector ? `Semantic similarity: ${cosine(embeddings[selected], queryVector).toFixed(3)}.` : "Run Semantic to compare the meaning."}`,
+          : `${queryVector ? `${cosine(embeddings[selected], queryVector).toFixed(3)} cosine · ` : ""}${overlap.length} shared query words`,
       );
       $("detail").append(evidence);
-      const related = el("div", "mm-related");
-      related.append(el("span", "mm-small", "Nearest neighbors"));
-      for (const r of rankSemantic(
-        collection.notes,
-        embeddings,
-        embeddings[selected],
-      )
-        .filter((r) => r.index !== selected)
-        .slice(0, 2)) {
-        const b = el("button", "", `${r.note.title} · ${r.score.toFixed(3)}`);
-        b.dataset.index = r.index;
-        related.append(b);
-      }
-      $("detail").append(related);
     }
     renderComparison(isExact);
     renderMap();
@@ -492,7 +530,7 @@ export function mountExperiment(element, options = {}) {
     const compareSemantic = mode === "keyword";
     $("comparison-heading").textContent = compareSemantic
       ? "Semantic comparison"
-      : "Literal word matches";
+      : "Compare with words";
     $("comparison-query").textContent = query
       ? `Same query: “${query}”`
       : "Enter a query to compare the two methods.";
@@ -550,7 +588,7 @@ export function mountExperiment(element, options = {}) {
     ]);
   }
   function renderMap() {
-    if (disposed || !points || !mapSection.open) return;
+    if (disposed || !points) return;
     const w = map.clientWidth,
       h = map.clientHeight,
       coords = screenPoints();
@@ -634,9 +672,10 @@ export function mountExperiment(element, options = {}) {
           by = y + dy;
         if (bx < 7 || bx + width > w - 7 || by < 7 || by + 26 > h - 36)
           continue;
-        // Labels have no opaque backing in embedded charts. Keep text clear
-        // of every dot as well as other labels.
+        // Ordinary labels have no opaque backing in embedded charts. The
+        // selected label has a solid fill and must remain readable on mobile.
         if (
+          i !== selected &&
           coords.some(
             ([nx, ny]) =>
               nx + 8 > bx &&
@@ -684,6 +723,7 @@ export function mountExperiment(element, options = {}) {
         ?.focus({ preventScroll: true });
   }
   async function search(value = queryInput.value) {
+    if (!ready) return;
     const text = value.trim();
     if (!text) {
       status("Enter an idea to search.", true);
@@ -693,13 +733,17 @@ export function mountExperiment(element, options = {}) {
     const token = ++operation;
     act("retry").hidden = true;
     retry = null;
-    if (busy) cancel(undefined, false);
+    if (busy && !warming) cancel(undefined, false);
     queryInput.value = text;
     const cached = precomputed.collections[collection.id]?.examples[text];
     const lookup = exactNoteIndex(collection.notes, text);
     const isFreshSemantic = !cached && mode === "semantic" && lookup < 0;
     const startedAt = performance.now();
     try {
+      if (isFreshSemantic) {
+        await warmModel();
+        if (disposed || token !== operation) return;
+      }
       const vector =
         cached ||
         (mode === "keyword" || lookup >= 0
@@ -720,12 +764,12 @@ export function mountExperiment(element, options = {}) {
       render();
       status(
         lookup >= 0
-          ? "Exact note ID found. Opened saved text without loading the model."
+          ? "Exact note ID found · opened saved text directly."
           : mode === "keyword"
-            ? "Keyword results ready. Switch to Semantic to compare sentence meaning."
+            ? "Keyword results ready."
             : cached
-              ? "Precomputed example: ranking uses genuine sentence embeddings."
-              : `Search complete. Your query was embedded locally with ${MODEL}.`,
+              ? "Example ready · real sentence vectors."
+              : "Search complete · local results.",
       );
     } catch (error) {
       if (token === operation) reportError(error, () => search(text));
@@ -742,7 +786,7 @@ export function mountExperiment(element, options = {}) {
       return;
     }
     const token = ++operation;
-    if (busy) cancel(undefined, false);
+    if (busy && !warming) cancel(undefined, false);
     const values = new FormData(form);
     const n = {
       id: `note-${Date.now()}`,
@@ -752,6 +796,8 @@ export function mountExperiment(element, options = {}) {
     };
     try {
       validateCollection({ version: 1, title: collection.title, notes: [n] });
+      await warmModel();
+      if (disposed || token !== operation) return;
       const result = await run("embed", [textForNote(n)]);
       if (disposed || token !== operation) return;
       const nextEmbeddings = [...embeddings, result.embeddings[0]];
@@ -776,13 +822,15 @@ export function mountExperiment(element, options = {}) {
   async function importFile(file) {
     if (!file) return;
     const token = ++operation;
-    if (busy) cancel(undefined, false);
+    if (busy && !warming) cancel(undefined, false);
     try {
       if (file.size > 500000)
         throw new Error("Collection files must be smaller than 500 KB.");
       const content = await file.text();
       if (disposed || token !== operation) return;
       const next = validateCollection(JSON.parse(content));
+      await warmModel();
+      if (disposed || token !== operation) return;
       const result = await run("collection", next.notes.map(textForNote));
       if (disposed || token !== operation) return;
       collection = next;
@@ -828,7 +876,8 @@ export function mountExperiment(element, options = {}) {
   on($("import"), "change", (e) => importFile(e.target.files[0]));
   on(root, "click", (e) => {
     const b = e.target.closest("button");
-    if (!b) return;
+    if (!b || (!ready && !["cancel", "retry"].includes(b.dataset.action)))
+      return;
     if (b.dataset.example !== undefined)
       search(collection.examples[Number(b.dataset.example)]);
     if (b.dataset.index !== undefined) {
@@ -876,18 +925,6 @@ export function mountExperiment(element, options = {}) {
       case "retry":
         retry?.();
         break;
-      case "load": {
-        const load = () =>
-          run("load")
-            .then(() =>
-              status(
-                "Model is ready. Fresh text now runs entirely in your browser.",
-              ),
-            )
-            .catch((e) => reportError(e, load));
-        load();
-        break;
-      }
       case "zoom-in":
         zoom = Math.min(3, zoom * 1.3);
         renderMap();
@@ -987,11 +1024,8 @@ export function mountExperiment(element, options = {}) {
   };
   on(map, "pointerup", stopDrag);
   on(map, "pointercancel", stopDrag);
-  on(mapSection, "toggle", () => {
-    if (mapSection.open) renderMap();
-  });
   on(document, "visibilitychange", () => {
-    if (document.hidden && busy)
+    if (document.hidden && busy && !warming)
       cancel(
         "Paused while this tab is hidden. Retry the action when you return.",
       );
@@ -1005,7 +1039,7 @@ export function mountExperiment(element, options = {}) {
         // Only one root is observed. A batch can contain multiple transitions;
         // apply its newest state, not an obsolete hidden entry at the start.
         const latest = entries.at(-1);
-        if (latest && !latest.isIntersecting && busy)
+        if (latest && !latest.isIntersecting && busy && !warming)
           cancel(
             "Paused while the experiment is off screen. Your collection is unchanged.",
           );
@@ -1015,11 +1049,14 @@ export function mountExperiment(element, options = {}) {
     visibility.observe(root);
     cleanups.push(() => visibility.disconnect());
   }
-  reset();
+  busyState(false);
+  loadSeed();
+  warmAutomatically();
   return {
     dispose() {
       if (disposed) return;
       disposed = true;
+      seedController?.abort();
       stopDrag();
       cancel();
       for (const cleanup of cleanups) cleanup();

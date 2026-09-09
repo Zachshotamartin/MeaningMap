@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import {
   normalize,
   cosine,
@@ -12,6 +14,8 @@ import {
 } from "../src/math.js";
 import { collections } from "../src/data/collections.js";
 import data from "../src/data/embeddings.json" with { type: "json" };
+import { collections as expanded } from "../src/data/collections-v2.js";
+import { SEED_PATH } from "../src/data/seed-path.js";
 test("exact ID navigation trims whitespace, supports unambiguous case changes, and never matches substrings", () => {
   const notes = [{ id: "f26" }, { id: "ABC" }, { id: "abc" }];
   assert.equal(exactNoteIndex(notes, " f26 "), 0);
@@ -91,6 +95,58 @@ test("real precomputed vectors are 384d normalized model output with matching de
     const ranking = rankSemantic(c.notes, d.embeddings, d.embeddings[0]);
     assert.equal(ranking[0].note.id, c.notes[0].id);
   }
+});
+test("expanded seed preserves 120 real vectors, stable PCA, cache integrity and the frozen evaluation corpus", async () => {
+  const read = (path) => readFile(new URL(`../${path}`, import.meta.url));
+  const bytes = await read(`public/${SEED_PATH}`);
+  const seed = JSON.parse(bytes);
+  const report = JSON.parse(await read("evaluation/expanded-results.json"));
+  assert.equal(
+    createHash("sha256").update(bytes).digest("hex"),
+    report.seed.sha256,
+  );
+  assert.equal(seed.model, data.model);
+  for (const c of expanded) {
+    const d = seed.collections[c.id];
+    assert.equal(c.notes.length, 60);
+    assert.deepEqual(d.collection, c);
+    assert.deepEqual(
+      c.notes.slice(0, 40),
+      collections.find((old) => old.id === c.id).notes,
+    );
+    assert.equal(d.embeddings.length, 60);
+    assert.deepEqual(project(d.embeddings), d.points);
+    for (const v of [...d.embeddings, ...Object.values(d.examples)]) {
+      assert.equal(v.length, 384);
+      assert.ok(Math.abs(Math.hypot(...v) - 1) < 1e-5);
+    }
+    assert.equal(
+      rankSemantic(c.notes, d.embeddings, d.embeddings[59])[0].note.id,
+      c.notes[59].id,
+    );
+  }
+  const frozen = JSON.parse(await read("evaluation/preregistration-v2.json"));
+  for (const [file, hash] of Object.entries({
+    ...frozen.hashes,
+    ...report.sourceHashes,
+  })) {
+    assert.equal(
+      createHash("sha256")
+        .update(await read(file))
+        .digest("hex"),
+      hash,
+      `${file} must still match its evaluation`,
+    );
+  }
+  assert.equal(report.queries.length, 24);
+  assert.equal(
+    report.queries.filter((q) => q.rank === 1).length,
+    report.hitAt1,
+  );
+  assert.equal(
+    report.queries.filter((q) => q.rank > 0 && q.rank <= 3).length,
+    report.hitAt3,
+  );
 });
 test("import validates schema, limits, duplicates and round trips portable text", () => {
   const valid = JSON.parse(serializeCollection(collections[0]));

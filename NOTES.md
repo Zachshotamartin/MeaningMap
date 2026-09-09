@@ -1,90 +1,65 @@
-# Meaning Map — current handoff
+# Meaning Map — PR4 handoff
 
-Search refinement completed and frozen for root integration, 2026-09-09. Root owns Git, pull requests and publication. No Git commands or actions were performed by this agent.
+Current source is complete and frozen for root integration, 2026-09-09. Root owns Git and publication. This agent performed no Git actions.
 
-## Product changes
+## Current experience
 
-- Search is primary: the complete saved passage and its ID/group are prominent, ranked results include original-text excerpts, and a simultaneous comparison shows the same query's literal word matches. Switching to Keyword exposes the semantic comparison instead; a fresh meaning comparison explicitly loads the local encoder.
-- The selected passage reports actual shared query words and full-vector cosine similarity. There are no generated explanations, answers, confidence probabilities or synthetic scores.
-- Collection topics and a browse-all-notes disclosure expose what can actually be searched. A Use your own notes button opens/focuses the existing add form. Existing 80 original notes and their embeddings remain unchanged, deliberately frozen during the model comparison.
-- A complete note ID routes directly to that note without model inference. Exact case takes priority; a case-insensitive fallback must be unique. Substrings do not match. The result shows `ID`, with explicit direct-lookup copy, never a perfect cosine score.
-- A query with no literal matches shows a clear empty state instead of the previously selected passage. Explicit browsing still opens a note after that empty state.
-- The map is now secondary inside `.mm-map-section`, closed by default. Open `.mm-map-section > summary` before map-node tests/captures. Node DOM creation is deferred until the map is open. Map controls, full-vector nearest links, authored group colors and keyboard navigation are retained.
-- A brief example remains above search; the fuller model/map explanation sits in a disclosure below the tool. It distinguishes the 80 search items from upstream pretrained weights, says new notes need no retraining, links the official model card and summarizes the expanded diagnostic honestly.
+The chart is always visible and primary. One search field and four short example chips sit above it; the selected original passage and three closest matches sit beside it. Semantic/Keyword remains a toggle. Same-query comparison, Your notes, How it works, and Model & activity are closed disclosures. The standalone header is omitted in embedded mode. The selected map label stays visible on narrow screens; ordinary labels avoid other labels and dots.
 
-## Model comparison and decision
+Field notes and Studio notebook now contain 60 notes each (120 total). Forty useful notes were added in `src/data/collections-v2.js`; the original 80-note corpus and evaluation were preserved unchanged. All 120 note vectors and eight example queries were regenerated with the genuine existing MiniLM q8 encoder. No model was trained or replaced. Groups remain authored colors; nearest links and ranking use full 384-dimensional embeddings; PCA positions are approximate.
 
-Keep MiniLM. No encoder, tokenizer, prepared vector, model asset, runtime asset, license, hash or asset path changed.
+The model warms automatically on mount. There is no manual Load local model button. Cached examples, keyword search and exact IDs work while warming; fresh searches and added/imported notes await the shared pending model. Only the newest queued operation may apply its result. Warmup contributes zero completed embedding requests. Initial below-fold visibility does not cancel it. Explicit Cancel and disposal terminate the worker, and disposal aborts pending note-seed fetches. Fresh inference still cancels when hidden/offscreen. Seed-fetch and model errors remain actionable even when concurrent startup stages finish in a different order.
 
-`evaluation/probes-v2.js` contains 64 queries/relevance labels frozen by SHA-256 together with `src/data/collections.js` before measuring candidates. The corpus and probes were never revised after seeing results. There are 44 paraphrase/synonym cases, four exact titles, four exact IDs and twelve unrelated questions. It is an authored diagnostic, not an independent public benchmark. E5 was added as a candidate after BGE tied MiniLM, before measuring E5; this sequence is recorded in `evaluation/preregistration-v2.json`.
+## Exact root selectors
 
-| q8 encoder | Paraphrase Hit@1 | Paraphrase Hit@3 | Model bytes |
-| --- | ---: | ---: | ---: |
-| MiniLM L6 | 37/44 | 42/44 | 23,685,172 |
-| BGE-small v1.5 | 37/44 | 42/44 | 34,726,996 |
-| E5-small v2 | 37/44 | 40/44 | 34,726,852 |
+- `[data-ui=collection]`: values `field-notes`, `studio-notebook`; each starts with 60 `.mm-node` buttons.
+- `[data-ui=query]`: labeled Search your notes; submit button accessible name `Find connections`.
+- `.mm-example`: four per preset. Field names: `Cool a city`, `Borrow instead of buy`, `Protect old photos`, `Make room for wildlife`. Studio names: `Undo a mistake`, `Navigate by listening`, `Keep data when offline`, `Find the slow requests`.
+- `.mm-map-section` is a **section**, not details. It has no summary and requires no opening click. `.mm-map` is visible on mount once notes arrive; `.mm-node-label.is-selected` labels the selection. Map controls: `Zoom in`, `Zoom out`, `Fit map`.
+- `.mm-detail h3` is selected title. Default Field selection `The white roof`; Borrow example `Borrow a drill`; Studio listening example `The spoken interface`.
+- `.mm-result`: up to three matches. `[data-mode=semantic]` and `[data-mode=keyword]` control method.
+- `.mm-comparison > summary`: optional comparison. Keyword mode may offer `Compare by meaning` for a fresh query.
+- `.mm-collection-editor > summary`: `Your notes`; open before add/import/export tests. `.mm-corpus > summary` opens all notes.
+- `.mm-guide-details > summary`: `How it works`; `.mm-activity > summary`: `Model & activity`.
+- Existing `[data-ui=status]`, `[data-ui=model-state]`, `[data-ui=request-count]`, `[data-ui=note-count]`, `[data-ui=query-time]` remain. Stats are now in the closed activity disclosure; text assertions can still read them, but open it before a screenshot.
+- Model state becomes `Ready` after automatic warmup; requests remain `0` and last query `Not run yet`. A successful fresh query status contains `Search complete`. `Retry` appears on startup/model failure. `Load local model` does not exist.
 
-On all 52 answerable queries, native MiniLM is 41/52 Hit@1 and 46/52 Hit@3. Exact-ID navigation raises these to 45/52 and 50/52, explicitly separate from semantic model quality. Literal overlap is 25/52 Hit@1 and 34/52 Hit@3. Zero-overlap notes are excluded from literal results, matching the UI. The four ID failures are not a reason to enlarge an encoder.
+## Honest evaluation wording
 
-All seven MiniLM paraphrase top-result misses are documented, including the severe export-information query miss at rank 23. BGE/E5 trade failures instead of improving overall usefulness. Unrelated questions still return nearby notes; no threshold was fitted to this test set and no cosine is presented as calibrated confidence. The collection scope and original-text presentation make this limitation visible.
+The current in-app text is: “On 24 separately written queries for these 120 notes, a relevant note ranked first in 18 cases and within three in all 24. This is a small authored diagnostic, not a guarantee. An earlier frozen 80-note comparison gave MiniLM and BGE-small the same paraphrase results, so we kept the smaller model. Exact IDs use direct lookup.”
 
-Reproduction: `npm run evaluate:compare` runs all three models and writes `evaluation/model-comparison-v2.json`, including every prediction, labels, scores, ranks, pooling/prefix choices, asset sizes/SHA-256 hashes and Node warm-query timings. Candidate q8 models download only into ignored `.cache/comparison-models/`, approximately 69 MB together, and are not shipped. BGE follows official CLS pooling plus its retrieval query instruction; E5 uses mean pooling and query/passage prefixes. Full rationale and official model-card/license links are in `evaluation/README.md`. The original `npm run evaluate` 16-query diagnostic remains separately reproducible.
+`evaluation/expanded-probes.js` was written before measurement. `evaluation/expanded-results.json` records all 24 queries, relevance labels, top-three actual scores, literal matches, source hashes and the seed hash. Reproduction: `npm run prepare:data:expanded`. Results are **18/24 Hit@1, 24/24 Hit@3**; the six misses remain recorded. These are not merged with the old model comparison or represented as general model accuracy.
 
-## API and integration
+The original frozen 64 queries still evaluate the original 80 notes. Model comparison remains MiniLM 37/44 paraphrase Hit@1 and 42/44 Hit@3; BGE 37/44 and 42/44; E5 37/44 and 40/44. Original model/probe hashes are tested unchanged. The earlier comparison justified keeping the smaller MiniLM; it is not presented as an evaluation of the expanded corpus. The legacy 16-query diagnostic also remains separate.
 
-- Package `@zachshotamartin/meaning-map`; exports `mountExperiment`, `metadata`, and `./style.css`.
-- `mountExperiment(element, {assetBase: '/assets/meaning-map/', embedded: true})` returns `{dispose()}` synchronously. Embedded mode omits the standalone title/header. Metadata instructions/limitations are arrays; technique is a string.
-- CSS is scoped below `.meaning-map`; standalone body CSS is separate. Copy all `public/*` under the supplied assetBase. Default standalone assetBase resolves `./` against the document URL.
-- Existing `.mm-results`, `.mm-detail`, `Find connections`, `[data-ui=status]`, model-state/request-count/note-count/query-time selectors remain. Map selectors require opening the new disclosure.
-- New selectors: `.mm-comparison`, `.mm-corpus`, `.mm-corpus-note`, `.mm-result-excerpt`, `[data-ui=scope]`, `[data-ui=query-heading]`.
-- No new runtime dependencies. Transformers remains a development dependency, so host installations do not install native Node inference packages.
+## API, assets and budgets
 
-## Shipped assets and CSP (unchanged)
+API is unchanged: `mountExperiment(element, {assetBase:'/assets/meaning-map/', embedded:true})` returns `{dispose()}` synchronously; metadata instructions/limitations arrays and technique string remain. No new runtime dependency. Transformers stays a development dependency.
 
-- Model `Xenova/all-MiniLM-L6-v2`, revision `751bff37182d3f1213fa05d7196b954e230abad9`, q8, mean pooling, normalized 384 dimensions.
-- Base path: `models/751bff37182d3f1213fa05d7196b954e230abad9/Xenova/all-MiniLM-L6-v2/` under assetBase.
-- Files: config.json 650 B; tokenizer.json 711,661 B; tokenizer_config.json 366 B; special_tokens_map.json 125 B; onnx/model_quantized.onnx 22,972,370 B.
-- Official bundled runtime `runtime/transformers-3.8.1.min.js`: 888,173 B.
-- `runtime/onnx-1.22.0-dev-89f8206ba4/ort-wasm-simd-threaded.mjs`: 20,856 B; matching WASM: 11,133,407 B.
-- Public assets about 35 MiB; model/runtime SHA-256 manifests and Apache/MIT/third-party licenses remain included.
-- Module worker uses explicit assetBase, one WASM thread, no ONNX proxy, no SharedArrayBuffer/COOP/COEP requirement. `env.allowRemoteModels=false`; no CDN fallback. User note/query text stays in the worker, never in a network request.
-- Production CSP: `script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'self' blob:`. Serve `.mjs` as JavaScript, `.wasm` as application/wasm and permit dynamic style properties. No general JS unsafe-eval or inline scripts.
-- No model/runtime request on mount, preset examples, fresh keyword search or exact-ID lookup. Explicit load, fresh semantic query, add or import trigger local inference.
-- Cancellation terminates the worker. Sequence plus operation epoch protects fresh/cached requests, slow File.text(), and multi-stage collection updates. Hidden/offscreen work is cancelled; latest IntersectionObserver batch entry controls visibility. Disposal releases listeners, observers, pointer capture and worker.
+Copy all `public/*` into the supplied asset base. New seed:
 
-## Validation and build
+- `public/data/meaning-notes-v2-96a7d40cd4df.json`
+- SHA-256 `96a7d40cd4df8835950b970b28aba8f6d27adb21a14124232a22b27d7d936b84`
+- 544,184 bytes raw; 205,325 bytes gzip.
+- Fetched only when Meaning Map mounts. The corpus/vectors are no longer bundled in application JS. Imports and the Experiments collection page do not start loading; root should mount only on the detail page.
 
-Final build: standalone main JS 392.91 KB raw / 152.62 KB gzip; CSS 14.69 KB / 3.31 KB gzip; worker 2.29 KB. No bundle warning. This remains within root's 450 KB raw / 175 KB gzip optional-tool budget; root's initial app budget stays separate.
+Final standalone build: main JS **26.60 KB raw / 10.34 KB gzip**, CSS **17.09 KB / 3.62 KB gzip**, worker **2.29 KB**. The seed is a separate lazy resource and exceeds the previous optional JS gzip budget by itself, but it no longer adds JS parse weight. Parent has been informed. Initial app budget is unaffected.
 
-Node tests **6/6** passed. Production-CSP browser tests **11/11** passed, including actual local model inference:
+Model and runtime files, SHA manifests, licenses and budgets are unchanged: Xenova/all-MiniLM-L6-v2 revision `751bff37182d3f1213fa05d7196b954e230abad9`; model files 23,685,172 bytes, official Transformers.js 3.8.1 plus ONNX 1.22 runtime about 12 MB. Same-origin module worker, one WASM thread, no CDN, no note text in requests. Production CSP stays self-only connect/script plus `wasm-unsafe-eval`, worker self/blob; correct `.mjs` and `.wasm` MIME. Embedded map/detail/result backgrounds are transparent, map border is zero, so the host page texture shows through.
 
-- Fresh tree/shade query returns Shade is infrastructure first.
-- A freshly embedded Bottle-fed balcony note is retrieved first by an unseen tomato-watering-during-a-trip query.
-- Same-query semantic/literal comparison, original text, direct ID lookup without model requests, corpus browsing, own-notes focus, unrelated question, and browse-after-no-literal-match behavior.
-- Model failure/retry, explicit cancel, cached example superseding a delayed fresh query, reset superseding slow file read, and disposal.
-- Batched visibility false/true preserves a held real request; true/false cancels; empty batch is safe.
-- Invalid import preserves notes; valid import recomputes embeddings; markup stays literal; actual exported JSON parses.
-- Keyboard map controls and 390px viewport without horizontal overflow.
+## Verification and captures
 
-All successful model tests use actual vectors, not mocks. Successful inference generated zero cross-origin requests. Existing inference statistics remain truthful: completed embedding requests, notes embedded, last fresh-query time including loading, and model state; cached/keyword/ID work does not inflate counts.
+- **7/7 Node tests** passed, including current 120-vector norm/dimension/PCA parity, data SHA, original corpus/probe hashes, ranking and import validation.
+- **11/11 production-CSP browser tests** passed with actual model assets: automatic warmup and zero inference count; fresh shade query; freshly added balcony note retrieved by unseen watering query; latest queued search; cached example superseding pending work; model retry and seed retry; delayed seed/model-error ordering; disposal; safe import and delayed File.text race; real export; exact IDs; optional comparison; 390px keyboard/viewport/map-label checks.
+- Successful embeddings are never mocked; no cross-origin text/model requests occurred.
+- `npm run capture` regenerated two focused transparent **1680×978 PNGs**, from actual selected map states, no panel border/header/forms/results sidebar. The second performs a fresh real-model listening-interface query. Both retain map labels and legend.
 
-## Final genuine previews
+Primary names (unchanged): `examples/meaning-map-cooler-city.png`, `examples/meaning-map-accessible-studio.png`. Root should use these only for the primary preview. Extra actual UI QA images: `examples/meaning-map-search-first.png` (full tool), `examples/mobile-390.png`, `examples/meaning-map-inference-stats.png`.
 
-`npm run capture` opens the optional map and records two actual distinct states. The second runs a fresh real-model listening-interface query and verifies The spoken interface.
+## Files for PR4
 
-- `examples/meaning-map-cooler-city.png`
-- `examples/meaning-map-accessible-studio.png`
+Changed source: `src/index.js`, `src/style.css`, `scripts/capture.mjs`, `tests/math.test.js`, `tests/browser/meaning-map.spec.js`, `package.json`, `README.md`, `NOTES.md`, and the five images above.
 
-Both primary previews are **1680×858 transparent PNGs**: actual map dots, labels, nearest links and legend, with no panel background, border, title controls or footnote. Export-only browser styling narrows the chart for a closer view. The background alpha is zero, allowing root's textured #142020 page to show through exactly. The standalone map retains its #142321 background. Embedded mode uses transparent map/detail/result backgrounds, no map border, and outline rings for selection so the host page texture shows through. Labels avoid other labels and note dots. The dot pattern and controls remain. No image generation, compositing or fake results.
+New files: `src/data/collections-v2.js`, `src/data/seed-path.js`, `public/data/meaning-notes-v2-96a7d40cd4df.json`, `scripts/prepare-data-v2.mjs`, `evaluation/expanded-probes.js`, `evaluation/expanded-results.json`. `evaluation/README.md` documents the separate expansion. Do not omit the public seed when publishing. The frozen original `src/data/collections.js`, `src/data/embeddings.json`, old evaluation probes/results, model/runtime assets and dependencies are unchanged.
 
-Additional actual QA captures: `examples/meaning-map-search-first.png` (complete interface), `examples/mobile-390.png` (390 CSS px), and `examples/meaning-map-inference-stats.png`. Root should use only the two focused transparent PNGs for primary previews.
-
-## Files changed for this refinement
-
-`src/index.js`, `src/style.css`, `src/math.js`, `tests/math.test.js`, `tests/browser/meaning-map.spec.js`, `scripts/capture.mjs`, `scripts/compare-models.mjs`, `package.json`, `README.md`, `NOTES.md`, `evaluation/probes-v2.js`, `evaluation/preregistration-v2.json`, `evaluation/model-comparison-v2.json`, `evaluation/README.md`, and the five screenshots listed above. Public assets, prepared embeddings, original collections and dependencies are unchanged. New evaluation files must be included in root's source commit; `.cache/`, test-results and dist remain ignored.
-
-## Local limits/server
-
-80 notes across two presets, 100 notes maximum per collection; query 600 chars, body 1,800 chars, title 100, group 40, tokenizer truncation 512 tokens. Text persists only in the tab until export. English semantic similarity can miss nuance and facts. Map PCA is approximate; ranking uses full vectors.
-
-Port 5182 is occupied by an existing `node web/serve.mjs`; do not terminate it. Production tests/captures use 5282 via scripts/serve.mjs. The npm dev command retains the requested 5182 port.
+Limits remain 100 notes per active collection, 600 query characters, 1,800 note characters and tokenizer truncation at 512 tokens. Notes live only in the tab until exported. Local production server 5282 uses current dist; port 5182 belongs to an existing unrelated server and was not disturbed.
