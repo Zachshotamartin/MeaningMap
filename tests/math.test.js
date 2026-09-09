@@ -5,12 +5,24 @@ import {
   cosine,
   rankSemantic,
   rankKeywords,
+  exactNoteIndex,
   project,
   validateCollection,
   serializeCollection,
 } from "../src/math.js";
 import { collections } from "../src/data/collections.js";
 import data from "../src/data/embeddings.json" with { type: "json" };
+test("exact ID navigation trims whitespace, supports unambiguous case changes, and never matches substrings", () => {
+  const notes = [{ id: "f26" }, { id: "ABC" }, { id: "abc" }];
+  assert.equal(exactNoteIndex(notes, " f26 "), 0);
+  assert.equal(exactNoteIndex(notes, "F26"), 0);
+  assert.equal(exactNoteIndex(notes, "ABC"), 1);
+  assert.equal(exactNoteIndex(notes, "abc"), 2);
+  assert.equal(exactNoteIndex(notes, "Abc"), -1);
+  assert.equal(exactNoteIndex(notes, "find f26 please"), -1);
+  assert.equal(exactNoteIndex(notes, "f2"), -1);
+  assert.equal(exactNoteIndex(notes, ""), -1);
+});
 test("cosine is normalized, signed, dimension-safe, and handles zero vectors", () => {
   assert.equal(cosine([2, 0], [100, 0]), 1);
   assert.equal(cosine([2, 0], [0, 9]), 0);

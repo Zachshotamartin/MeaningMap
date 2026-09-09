@@ -8,7 +8,7 @@ test("instant genuine presets, keyword contrast, map keys, and portable export",
     if (/\/models\/|\.wasm/.test(r.url())) modelRequests.push(r.url());
   });
   await page.goto("/");
-  await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(40);
   await expect(page.locator('[data-ui="model-state"]')).toHaveText(
     "Not loaded",
   );
@@ -24,6 +24,7 @@ test("instant genuine presets, keyword contrast, map keys, and portable export",
     "exact word overlap",
   );
   await page.getByRole("button", { name: "Semantic", exact: true }).click();
+  await page.locator(".mm-map-section > summary").click();
   await page.locator(".mm-node[aria-pressed=true]").focus();
   await page.keyboard.press("ArrowLeft");
   await expect(page.locator(".mm-node:focus")).toHaveCount(1);
@@ -89,7 +90,7 @@ test("actual WASM model handles a fresh query and a new pasted note under self-o
   await expect(status(page)).toContainText("Note embedded and added", {
     timeout: 60000,
   });
-  await expect(page.locator(".mm-node")).toHaveCount(41);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(41);
   await expect(page.locator(".mm-detail")).toContainText("Bottle-fed balcony");
   await expect(page.locator('[data-ui="request-count"]')).toHaveText("2");
   await expect(page.locator('[data-ui="note-count"]')).toHaveText("1");
@@ -123,7 +124,7 @@ test("model failure, retry, cancellation, and stale requests preserve data", asy
   await expect(
     page.getByRole("button", { name: "Retry", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(40);
   await page.unroute("**/models/**");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(status(page)).toContainText("Search complete", {
@@ -177,7 +178,7 @@ test("import rejects invalid data, embeds valid plain text, and safely renders m
     buffer: Buffer.from('{"version":8,"notes":[]}'),
   });
   await expect(status(page)).toContainText("Could not complete");
-  await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(40);
   const data = {
     version: 1,
     title: "Small safe collection",
@@ -204,7 +205,7 @@ test("import rejects invalid data, embeds valid plain text, and safely renders m
   await expect(status(page)).toContainText("Imported 2 notes", {
     timeout: 90000,
   });
-  await expect(page.locator(".mm-node")).toHaveCount(2);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(2);
   await expect(page.locator(".mm-detail")).toContainText(
     "<img src=x onerror=alert(1)>",
   );
@@ -218,6 +219,7 @@ test("390px mobile layout stays inside viewport and has usable keyboard controls
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= 390),
   ).toBeTruthy();
+  await page.locator(".mm-map-section > summary").click();
   await expect(page.locator(".mm-map")).toBeVisible();
   await page.locator("[data-ui=query]").focus();
   await page.keyboard.press("Tab");
@@ -225,7 +227,7 @@ test("390px mobile layout stays inside viewport and has usable keyboard controls
     page.getByRole("button", { name: "Find connections" }),
   ).toBeFocused();
   await page.locator("[data-ui=collection]").selectOption("studio-notebook");
-  await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(40);
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   await page.getByRole("button", { name: "Fit map", exact: true }).click();
   await page.screenshot({ path: "examples/mobile-390.png", fullPage: true });
@@ -263,7 +265,7 @@ test("a reset supersedes a slow file read without creating a stale collection", 
     .getByRole("button", { name: "Reset to preset", exact: true })
     .click();
   await page.waitForTimeout(900);
-  await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator(".mm-corpus-note")).toHaveCount(40);
   await expect(page.locator("[data-ui=collection]")).toHaveValue("field-notes");
   await expect(status(page)).toContainText("Precomputed example");
 });
@@ -370,4 +372,77 @@ test("newest visible entry in a batched observer notification preserves a busy m
   } finally {
     release();
   }
+});
+
+test("search-first view shows original text, same-query comparison, discoverable corpus, and direct IDs without inference", async ({
+  page,
+}) => {
+  const modelRequests = [];
+  page.on("request", (r) => {
+    if (/\/models\/|\/runtime\//.test(r.url())) modelRequests.push(r.url());
+  });
+  await page.goto("/");
+  await expect(page.locator(".mm-map-section")).not.toHaveAttribute("open", "");
+  await expect(page.locator(".mm-note-body")).toContainText(
+    "A pale roof reflects sunlight",
+  );
+  await expect(page.locator(".mm-comparison")).toBeVisible();
+  await expect(page.locator("[data-ui=comparison-query]")).toContainText(
+    await page.locator("[data-ui=query]").inputValue(),
+  );
+  await expect(page.locator(".mm-result-excerpt").first()).toContainText(
+    "A pale roof",
+  );
+  await expect(page.locator("[data-ui=scope]")).toContainText("40 notes");
+  await page.locator(".mm-corpus > summary").click();
+  await page.locator('.mm-corpus-note[data-index="8"]').click();
+  await expect(page.locator(".mm-detail h3")).toHaveText("Borrow a drill");
+  await expect(page.locator(".mm-detail h3")).toBeFocused();
+  await page.locator("[data-ui=query]").fill(" F26 ");
+  await page.getByRole("button", { name: "Find connections" }).click();
+  await expect(status(page)).toContainText("Exact note ID found");
+  await expect(page.locator(".mm-result")).toHaveCount(1);
+  await expect(page.locator(".mm-result .mm-score")).toHaveText("ID");
+  await expect(page.locator(".mm-detail .mm-eyebrow")).toContainText("f26");
+  await expect(page.locator("[data-ui=request-count]")).toHaveText("0");
+  await expect(page.locator("[data-ui=model-state]")).toHaveText("Not loaded");
+  expect(modelRequests).toEqual([]);
+  await page.getByRole("button", { name: "Use your own notes" }).click();
+  await expect(page.getByLabel("Title", { exact: true })).toBeFocused();
+});
+
+test("unrelated queries remain collection suggestions and keyword no-match state does not present a stale note", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Keyword", exact: true }).click();
+  await page.locator("[data-ui=query]").fill("quasarquasarquasar");
+  await page.getByRole("button", { name: "Find connections" }).click();
+  await expect(page.locator(".mm-detail h3")).toHaveText("No literal matches");
+  await expect(
+    page.getByRole("button", { name: "Compare by meaning" }),
+  ).toBeVisible();
+  await expect(page.locator("[data-ui=result-count]")).toHaveText("0 matches");
+  await page.locator(".mm-corpus > summary").click();
+  await page.locator('.mm-corpus-note[data-index="8"]').click();
+  await expect(page.locator(".mm-detail h3")).toHaveText("Borrow a drill");
+  await page.locator("[data-ui=query]").fill("What is the capital of Peru?");
+  await page.getByRole("button", { name: "Find connections" }).click();
+  await page.getByRole("button", { name: "Compare by meaning" }).click();
+  await expect(status(page)).toContainText("Search complete", {
+    timeout: 90000,
+  });
+  await expect(page.locator("[data-ui=scope]")).toContainText(
+    "may not contain what you need",
+  );
+  await expect(page.locator(".mm-detail .mm-eyebrow")).toContainText(
+    "SAVED NOTE",
+  );
+  await expect(page.locator(".mm-comparison")).toContainText(
+    "No shared query words",
+  );
+  await expect(page.locator("[data-ui=request-count]")).toHaveText("1");
+  await expect(page.locator(".mm-score-note")).toContainText(
+    "not a probability",
+  );
 });

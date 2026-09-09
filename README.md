@@ -1,8 +1,8 @@
 # Meaning Map
 
-A working semantic notebook. Search for an idea, compare semantic and literal word rankings, select notes in a map, follow related thoughts, and add your own text. The two original collections contain **80 notes**: Field notes and Studio notebook, 40 each.
+A working semantic notebook. Search for an idea and read the original saved passage. Compare meaning-based results with literal word matches for the same query, browse the whole collection, or add your own text. An optional map helps you explore related notes. The two original collections contain **80 notes**: Field notes and Studio notebook, 40 each.
 
-The in-app guide remains visible in standalone and embedded mode. It explains the cooling-buildings → reflective-roofs example, dots as notes, authored color groups, nearest-neighbor lines, approximate map distances, and semantic versus literal ranking. Its expandable model explanation distinguishes pretrained MiniLM from the 80 searchable notes, explains why adding notes needs no retraining, links to the official upstream model card, and presents the 16-query diagnostic with its limits.
+The brief introduction gives a concrete cooling-buildings → reflective-roofs example in standalone and embedded mode. Results show complete original text, actual shared query words and cosine similarity; they are saved-note suggestions, not generated answers. The collection topics and a browse-all-notes view make the searchable material discoverable. Enter a complete note ID such as `f26` to open it directly without inference. Model background, map reading and the 64-query evaluation live in a disclosure below the tool.
 
 ![Actual Meaning Map interface](examples/meaning-map-cooler-city.png)
 
@@ -24,7 +24,7 @@ npm run test:browser
 npm run capture
 ```
 
-`test:browser` starts the production server when needed. `capture` also starts it when needed and writes two focused map previews from the actual UI, plus mobile and inference-statistics verification images. Primary previews contain only the map panel and legend, at 2× pixel density. Build first. The source of both standalone and embedded experiences is `src/index.js`.
+`test:browser` starts the production server when needed. `capture` also starts it when needed and writes two focused map previews from the actual UI, plus mobile and inference-statistics verification images. Primary previews contain only the actual map, labels and legend, at 2× pixel density. Their background is transparent and the frame, heading controls and footnote are omitted for export; the live UI is unchanged. Build first. The source of both standalone and embedded experiences is `src/index.js`.
 
 ## What is actually learned
 
@@ -32,7 +32,7 @@ The sentence encoder is **pretrained**, not trained by this project. It is the A
 
 This project writes original notes and generates real 384-dimensional sentence embeddings from their titles and bodies. It uses q8 inference, attention-aware mean pooling, and L2 normalization through [Transformers.js](https://huggingface.co/docs/transformers.js/v3.8.1/api/pipelines). Group labels are authored categories used for color; they are not model-generated clusters and are excluded from embedding input.
 
-Semantic search compares the full query vector with each note using cosine similarity. The comparison tab is an explicitly labeled literal baseline: the fraction of unique query terms found in a note's title or text, after common words are removed. It does not stem words and is not AI.
+Semantic search compares the full query vector with each note using cosine similarity. The simultaneous comparison and Keyword tab use an explicitly labeled literal baseline: the fraction of unique query terms found in a note's title or text, after common words are removed. It does not stem words and is not AI.
 
 The map uses deterministic principal component analysis (PCA), implemented with a centered Gram matrix and power iteration. It shows the two leading components. These axes have no assigned conceptual meaning, and two dimensions necessarily discard information. All ranking and nearest-neighbor links use the full 384 dimensions, not map distances. Labels are collision-checked and limited at small widths.
 
@@ -42,19 +42,23 @@ The map uses deterministic principal component analysis (PCA), implemented with 
 node scripts/fetch-model.mjs       # optional: restore pinned official model files
 node scripts/prepare-runtime.mjs   # restore official runtime from npm dependencies
 npm run prepare:data
-npm run evaluate
+npm run evaluate                 # original 16-query diagnostic
+npm run evaluate:compare         # frozen 64-query, three-model comparison
 ```
 
 The included model files make data generation work without a Hugging Face request. `prepare:data` runs the same q8 encoder through ONNX Runtime Node and writes `src/data/embeddings.json`. Stored components are rounded to seven decimal places (at most 0.00000005 component error) to reduce the optional JavaScript payload; projection is recomputed from those stored vectors. Fresh browser queries use full runtime float32 output. Tests verify normalization, dimensions, ranking, and projection parity.
 
-`evaluate` embeds 16 human-labeled paraphrase queries absent from the preset examples, and records every query, relevance label, first relevant rank, top three predictions, and score in `examples/retrieval-evaluation.json`. There is no model fitting or fine-tuning in either script. This is a small authored diagnostic set, not an independent or broad benchmark.
+The broader comparison freezes 64 authored queries and the existing 80-note corpus by SHA-256 before measuring candidate encoders. It contains 44 paraphrase/synonym cases, four exact titles, four exact IDs and twelve out-of-scope questions. No labels or note texts were revised after seeing results, and no model was trained. This is a local diagnostic, not an independent public benchmark.
 
-| Retrieval method | Hit@1 | Hit@3 | Mean reciprocal rank |
-| --- | ---: | ---: | ---: |
-| MiniLM cosine | 81.25% (13/16) | 93.75% (15/16) | 0.8795 |
-| Literal term overlap | 50.00% (8/16) | 62.50% (10/16) | 0.6038 |
+| q8 encoder       | Paraphrase Hit@1 | Paraphrase Hit@3 | Model files |
+| ---------------- | ---------------: | ---------------: | ----------: |
+| MiniLM (shipped) |            37/44 |            42/44 |   23.685 MB |
+| BGE-small v1.5   |            37/44 |            42/44 |   34.727 MB |
+| E5-small v2      |            37/44 |            40/44 |   34.727 MB |
 
-Preset examples were chosen to make useful connections visible; evaluation probes remain separate. Failure cases are included in the JSON report.
+MiniLM stays because the larger downloads did not improve these results. On all 52 answerable queries MiniLM scores 41/52 Hit@1 and 46/52 Hit@3; the explicit ID-lookup rule raises these to 45/52 and 50/52 without changing semantic inference. The literal baseline scores 25/52 and 34/52. Similarity search still returns neighbors for questions absent from the collection; the interface never treats a cosine score as a confidence probability.
+
+[Full protocol, failures, model configurations and reproduction notes](evaluation/README.md) accompany [every prediction and metric](evaluation/model-comparison-v2.json). Candidate models download only into ignored development cache; the browser still ships the same MiniLM assets. The legacy 16-query diagnostic remains in examples/retrieval-evaluation.json and is not merged with these counts.
 
 ## Local inference and limits
 
@@ -72,7 +76,7 @@ The statistics strip reports this visit's model state, completed embedding reque
 
 ## Keyboard, mobile, and collection files
 
-- Use Tab to reach the selected map dot. Arrow keys navigate geometrically to another note. Enter/Space selects it.
+- Open **Explore the note map**, then use Tab to reach the selected map dot. Arrow keys navigate geometrically to another note. Enter/Space selects it.
 - With the map itself focused, arrows pan; plus/minus zoom. Buttons provide touch alternatives and **Fit map** restores the overview. Desktop mouse dragging also pans; mobile page scrolling remains available.
 - Ranked results and nearest-neighbor links are ordinary labeled buttons. Status/errors use a live region; inputs have labels and visible focus.
 - **Your collection** contains add, import, export, and reset actions. Added notes live in this tab only. Export before navigating away.
@@ -85,7 +89,12 @@ Portable schema:
   "version": 1,
   "title": "My notebook",
   "notes": [
-    { "id": "note-1", "title": "A thought", "text": "The note body.", "group": "Ideas" }
+    {
+      "id": "note-1",
+      "title": "A thought",
+      "text": "The note body.",
+      "group": "Ideas"
+    }
   ]
 }
 ```
@@ -93,18 +102,18 @@ Portable schema:
 ## Embed in the portfolio
 
 ```js
-import { mountExperiment, metadata } from '@zachshotamartin/meaning-map';
-import '@zachshotamartin/meaning-map/style.css';
+import { mountExperiment, metadata } from "@zachshotamartin/meaning-map";
+import "@zachshotamartin/meaning-map/style.css";
 
 const instance = mountExperiment(container, {
-  assetBase: '/assets/meaning-map/',
+  assetBase: "/assets/meaning-map/",
   embedded: true,
 });
 // On unmount:
 instance.dispose();
 ```
 
-The function returns `{ dispose() }` synchronously and owns only its DOM subtree. `embedded: true` omits the standalone title/header; the parent can provide its own title. `metadata.instructions` and `metadata.limitations` are arrays of strings, and `metadata.technique` is a string. CSS is scoped below `.meaning-map` and inherits the host font.
+The function returns `{ dispose() }` synchronously and owns only its DOM subtree. `embedded: true` omits the standalone title/header; the parent can provide its own title. `metadata.instructions` and `metadata.limitations` are arrays of strings, and `metadata.technique` is a string. CSS is scoped below `.meaning-map` and inherits the host font. Embedded map/detail/result backgrounds are transparent and the map has no frame, allowing the host page texture to show through.
 
 Copy **all contents of `public/`** under the `assetBase` path. Default standalone assetBase resolves `./` against the document base URL. Model paths contain their immutable upstream revision; runtime paths contain their package version. Asset SHA-256 hashes and byte sizes are in `public/models/MANIFEST.json` and `public/runtime/MANIFEST.json`. There are no remote fallbacks.
 
@@ -120,6 +129,6 @@ The host must serve `.mjs` as JavaScript, `.wasm` as `application/wasm`, and per
 
 ## Verification and licensing
 
-Node tests cover embedding math, exact word ranking, deterministic PCA, genuine cached vector shape/norm/parity, and import validation. Browser tests use actual local model assets with the production CSP and cover arbitrary fresh queries, a newly added note found semantically, model errors/retry/cancel, delayed requests/file reads, safe markup import, JSON export, keyboard interaction, and 390px layout. Tests do not mock successful embeddings.
+Node tests cover whole-ID navigation, embedding math, exact word ranking, deterministic PCA, genuine cached vector shape/norm/parity, and import validation. Browser tests use actual local model assets with the production CSP and cover arbitrary fresh queries, a newly added note found semantically, model errors/retry/cancel, delayed requests/file reads, safe markup import, JSON export, keyboard interaction, same-query comparisons, unrelated queries, direct ID lookup without downloads, and 390px layout. Tests do not mock successful embeddings.
 
 The authored implementation and notes are MIT licensed. The pretrained model and Transformers.js are Apache-2.0; ONNX Runtime is MIT with included third-party notices. See `THIRD_PARTY_NOTICES.md` and the license files under `public/`.
