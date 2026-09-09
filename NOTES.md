@@ -52,7 +52,7 @@ Evaluation: 16 human-labeled paraphrase queries absent from the six curated pres
 
 - `examples/meaning-map-cooler-city.png` (2128×1082 focused map preview)
 - `examples/meaning-map-accessible-studio.png` (2128×1082 focused map preview)
-- `examples/mobile-390.png` (390 CSS px, full page at 2× density)
+- `examples/mobile-390.png` (390px full-page browser verification)
 - `examples/meaning-map-inference-stats.png` (additional loaded-model statistics verification)
 
 The two primary thumbnails contain only the map panel: actual note positions, selected note, sparse labels, links, and legend. They omit the page header, search form, result sidebar, and statistics. The second capture performs an actual fresh query before recording its distinct selected map state. No fabricated results, image generation, or compositing.
@@ -66,6 +66,14 @@ Added a modest statistics strip: model Not loaded/Loading/Ready/Error, completed
 Final validation for PR2: build passes, Node 5/5, production browser 9/9 including actual-model statistics assertions, and focused captures regenerated. Transformers remains in devDependencies; browser runtime and asset paths are unchanged. No commits created by the agent.
 
 Final preview-background adjustment: `--mm-bg` and the map panel now match Mesh Workshop's exact viewport color `#142321`; node halos and label backgrounds follow it. The green radial dot pattern is preserved. Rebuilt and regenerated both focused primary previews plus mobile. Computed production style verified `rgb(20, 35, 33)` with the original dot pattern, and the refreshed preview was visually inspected. No behavior changed; no additional behavioral tests were needed.
+
+## In-app understanding follow-up
+
+Added a compact guide before the search controls which remains visible with `embedded:true`. It gives the cooling-buildings → reflective-roofs example, explains dots as individual notes, colors as authored groups, lines as up to three closest full-vector neighbors, semantic versus literal word ranking, scores as similarity rather than probabilities, and approximate two-dimensional map distances. It states immediately that the model is pretrained and adding notes requires no retraining.
+
+An expandable section separates the 80 searchable sample notes from the upstream model's training. It describes local 384-number embeddings and links directly to the official sentence-transformers model card, whose billion-plus sentence-pair fine-tuning dataset was verified. The local 13/16 first-result and 15/16 top-three figures are explicitly labeled a small authored diagnostic, not a guarantee or broad benchmark.
+
+Build passed; all nine production browser tests passed after narrowing collection-editor summary selectors to accommodate the new disclosure. Actual embedded-mode UI was mounted and inspected through Vite, with the standalone header absent, guide present, disclosure/link/results visible, and no model loading. Desktop and 390px screenshots of the guide were visually inspected; no horizontal overflow. The map panel itself did not change, so focused primary previews were preserved. The mobile full-page verification image reflects the new guide. Existing model/request statistics and inference behavior remain intact. No commits made by the agent; files frozen for the root's final commit.
 
 ## Limits and local server
 

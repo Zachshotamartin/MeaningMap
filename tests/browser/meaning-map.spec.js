@@ -38,7 +38,7 @@ test("instant genuine presets, keyword contrast, map keys, and portable export",
     "A reversible first step",
   );
   expect(modelRequests).toEqual([]);
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export collection (.json)" }).click();
   const download = await downloadPromise;
@@ -78,7 +78,7 @@ test("actual WASM model handles a fresh query and a new pasted note under self-o
   await expect(page.locator('[data-ui="query-time"]')).toHaveText(
     /^\d+(\.\d+)? (ms|s)$/,
   );
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   await page.getByLabel("Title", { exact: true }).fill("Bottle-fed balcony");
   await page
     .getByLabel("Note", { exact: true })
@@ -170,7 +170,7 @@ test("import rejects invalid data, embeds valid plain text, and safely renders m
   page,
 }) => {
   await page.goto("/");
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   await page.locator("[data-ui=import]").setInputFiles({
     name: "bad.json",
     mimeType: "application/json",
@@ -241,7 +241,7 @@ test("a reset supersedes a slow file read without creating a stale collection", 
     };
   });
   await page.goto("/");
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   const value = {
     version: 1,
     title: "Late import",

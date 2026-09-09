@@ -119,6 +119,40 @@
   gap: 24px;
   margin-bottom: 24px;
 }
+.meaning-map .mm-guide {
+  margin-bottom: 22px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--mm-line);
+}
+.meaning-map .mm-guide-intro {
+  max-width: 100ch;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+.meaning-map .mm-guide-key {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 12px 24px;
+  color: var(--mm-muted);
+  font-size: 14px;
+}
+.meaning-map .mm-guide strong {
+  color: var(--mm-text);
+  font-weight: 600;
+}
+.meaning-map .mm-guide-details summary {
+  min-height: 48px;
+  padding: 14px 0 0;
+  font-size: 14px;
+}
+.meaning-map .mm-guide-details > div {
+  display: grid;
+  gap: 12px;
+  max-width: 100ch;
+  padding-top: 12px;
+  color: var(--mm-muted);
+  font-size: 16px;
+}
 .meaning-map .mm-eyebrow {
   font:
     400 12px/1.5 "IBM Plex Mono",

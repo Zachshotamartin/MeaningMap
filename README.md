@@ -2,6 +2,8 @@
 
 A working semantic notebook. Search for an idea, compare semantic and literal word rankings, select notes in a map, follow related thoughts, and add your own text. The two original collections contain **80 notes**: Field notes and Studio notebook, 40 each.
 
+The in-app guide remains visible in standalone and embedded mode. It explains the cooling-buildings → reflective-roofs example, dots as notes, authored color groups, nearest-neighbor lines, approximate map distances, and semantic versus literal ranking. Its expandable model explanation distinguishes pretrained MiniLM from the 80 searchable notes, explains why adding notes needs no retraining, links to the official upstream model card, and presents the 16-query diagnostic with its limits.
+
 ![Actual Meaning Map interface](examples/meaning-map-cooler-city.png)
 
 ## Run
