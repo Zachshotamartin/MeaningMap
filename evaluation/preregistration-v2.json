@@ -1,0 +1,26 @@
+{
+  "date": "2026-09-09",
+  "purpose": "Freeze queries and original corpus before measuring candidates. Authored diagnostic, not an independent public benchmark.",
+  "models": [
+    "Xenova/all-MiniLM-L6-v2 q8 mean normalized",
+    "Xenova/bge-small-en-v1.5 q8 CLS normalized with official retrieval query prefix"
+  ],
+  "hypotheses": [
+    "Compare semantic retrieval on 44 paraphrase/synonym cases, 4 exact titles, and 4 exact IDs.",
+    "Exact-ID lookup is deterministic navigation; evaluate separately from learned retrieval.",
+    "For 12 out-of-scope cases, report similarity distribution and inspect unsupported results. Do not fit an abstention threshold on this test set.",
+    "No model finetuning, no query relabeling or note rewriting after seeing results."
+  ],
+  "hashes": {
+    "evaluation/probes-v2.js": "0d098a4100cd1b745067e72ff672c276ca7ae72ef84b5a5c700df82fda51781f",
+    "src/data/collections.js": "b290d7d2db58ac5a9090e40a6df7e1de8aff59fb2df1b2dca106d317ca184c30"
+  },
+  "additionalCandidate": {
+    "model": "Xenova/e5-small-v2",
+    "revision": "02af79985278377e65c724a76275707cb0333c70",
+    "pooling": "mean",
+    "queryPrefix": "query: ",
+    "passagePrefix": "passage: ",
+    "reason": "Added before measuring E5, after BGE tied the baseline. All frozen questions, labels and corpus remain unchanged."
+  }
+}

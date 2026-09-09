@@ -18,6 +18,17 @@ export function rankSemantic(notes, embeddings, query) {
     .map((note, i) => ({ note, index: i, score: cosine(embeddings[i], query) }))
     .sort((a, b) => b.score - a.score || a.index - b.index);
 }
+// Exact identifiers are navigation, not a learned similarity score. Require
+// the whole query, and refuse ambiguous case-insensitive matches.
+export function exactNoteIndex(notes, query) {
+  const text = query.trim();
+  const exact = notes.findIndex((note) => note.id === text);
+  if (exact >= 0) return exact;
+  const matches = notes.flatMap((note, index) =>
+    note.id.toLowerCase() === text.toLowerCase() ? [index] : [],
+  );
+  return matches.length === 1 ? matches[0] : -1;
+}
 const stop = new Set(
   "a an and are as at be but by can do for from how i in is it of on or that the their them this to was we what when where which who will with without you your".split(
     " ",

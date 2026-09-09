@@ -14,7 +14,8 @@
     "test:browser": "playwright test",
     "capture": "node scripts/capture.mjs",
     "prepare:data": "node scripts/prepare-data.mjs",
-    "evaluate": "node scripts/evaluate.mjs"
+    "evaluate": "node scripts/evaluate.mjs",
+    "evaluate:compare": "node scripts/compare-models.mjs"
   },
   "devDependencies": {
     "@huggingface/transformers": "3.8.1",

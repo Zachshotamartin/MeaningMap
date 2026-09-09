@@ -22,13 +22,36 @@ const page = await browser.newPage({
 async function capture(name) {
   await page.locator(".mm-node").first().waitFor();
   const panel = page.locator(".mm-map-panel");
-  const png = await panel.screenshot({ path: `examples/${name}.png` });
+  // Export the actual chart layers over transparency so a host's textured
+  // background shows through. This styling is confined to the capture.
+  const exportStyle = await page.addStyleTag({
+    content: `
+    html, body, #app, .meaning-map { background: transparent !important; }
+    .meaning-map .mm-map-panel { --mm-bg: transparent; background: transparent !important; border: 0; border-radius: 0; width: 840px; max-width: 100%; }
+    .meaning-map .mm-map-heading, .meaning-map .mm-map-footnote { display: none; }
+    .meaning-map .mm-map { margin-top: 0; }
+    .meaning-map .mm-node-label:not(.is-selected) { background: transparent; }
+    .meaning-map .mm-node span { box-shadow: none !important; }
+    .meaning-map .mm-node.is-selected span { outline: 1px solid var(--group); outline-offset: 5px; }
+    .meaning-map .mm-legend { padding-bottom: 12px; }
+  `,
+  });
+  const png = await panel.screenshot({
+    path: `examples/${name}.png`,
+    omitBackground: true,
+  });
+  await exportStyle.evaluate((node) => node.remove());
   console.log(
     `Captured ${name}: ${png.readUInt32BE(16)} × ${png.readUInt32BE(20)} map preview`,
   );
 }
 try {
   await page.goto(base);
+  await page.screenshot({
+    path: "examples/meaning-map-search-first.png",
+    fullPage: true,
+  });
+  await page.locator(".mm-map-section > summary").click();
   await capture("meaning-map-cooler-city");
   await page.locator("[data-ui=collection]").selectOption("studio-notebook");
   await page
