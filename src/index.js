@@ -53,6 +53,7 @@ export function mountExperiment(element, options = {}) {
  <div class="mm-workspace"><div class="mm-map-column"><div class="mm-map-panel"><div class="mm-map-heading"><div><h3>Semantic landscape</h3><span data-ui="map-count" class="mm-small"></span></div><div class="mm-map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit">Fit map</button></div></div><div data-ui="map" class="mm-map" tabindex="0" role="group" aria-label="Note map. Select a note with Tab, navigate notes with arrow keys. When the map has focus, arrows pan and plus or minus zoom."><svg class="mm-edges" aria-hidden="true"></svg><div data-ui="nodes" class="mm-nodes"></div><div data-ui="labels" class="mm-labels" aria-hidden="true"></div><div class="mm-map-caption">NEARBY IDEAS, DIFFERENT WORDS</div></div><div data-ui="legend" class="mm-legend"></div><p class="mm-map-footnote">2D PCA projection · distances are approximate. Rankings use all 384 dimensions.</p></div><article data-ui="detail" class="mm-detail" aria-label="Selected note"></article></div>
  <aside class="mm-results"><div class="mm-results-header"><h3>Closest thoughts</h3><span data-ui="result-count" class="mm-small"></span></div><div class="mm-tabs" role="group" aria-label="Ranking method"><button data-mode="semantic" aria-pressed="true">Semantic</button><button data-mode="keyword" aria-pressed="false">Keyword</button></div><p data-ui="ranking-info" class="mm-ranking-info"></p><ol data-ui="results" class="mm-result-list"></ol><p class="mm-score-note">Cosine similarity is a relationship between vectors, not a probability or a factual judgment.</p></aside></div>
  <div class="mm-statusbar"><p data-ui="status" role="status" aria-live="polite">Examples are ready. Fresh text loads the model only when you need it.</p><progress data-ui="progress" max="100" value="0" hidden aria-label="Model loading progress"></progress><button data-action="cancel" hidden>Cancel</button><button data-action="retry" hidden>Retry</button><button data-action="load">Load local model</button></div>
+ <div class="mm-inference-stats" aria-label="Local inference statistics"><dl><div><dt>Model</dt><dd data-ui="model-state">Not loaded</dd></div><div><dt>Completed requests</dt><dd data-ui="request-count">0</dd></div><div><dt>Notes embedded</dt><dd data-ui="note-count">0</dd></div><div><dt>Last fresh query</dt><dd data-ui="query-time">Not run yet</dd></div></dl><p>This visit only. Requests include queries and note batches. Query time includes loading when needed. Pretrained encoder; no training.</p></div>
  <details class="mm-collection-editor"><summary>Your collection <span class="mm-small">Add notes, import, or take a copy</span></summary><div class="mm-editor-body"><form class="mm-add-form"><h3>Add a thought</h3><label>Title<input name="title" required maxlength="100" placeholder="A short, useful title"></label><label>Note<textarea name="text" required maxlength="1800" rows="3" placeholder="Paste a thought or a paragraph. It stays in this browser tab."></textarea></label><label>Group<input name="group" maxlength="40" value="My notes" required></label><button class="mm-primary" type="submit">Embed & add note</button></form><div class="mm-file-tools"><h3>Make it yours</h3><p>Up to 100 notes per collection. Added notes stay in this tab until you export them.</p><button data-action="export">Export collection (.json)</button><label class="mm-file-label">Import collection<input data-ui="import" type="file" accept="application/json,.json"></label><button data-action="reset">Reset to preset</button><p class="mm-small">Import validates the text and regenerates every embedding with the same model. Existing notes are replaced only after success.</p></div></div></details>
  <footer class="mm-footer">Original notes + real pretrained embeddings. <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2" target="_blank" rel="noreferrer">MiniLM model · Apache 2.0</a><span>No server inference. No API key.</span></footer>`;
   if (options.embedded) root.querySelector(".mm-header").remove();
@@ -86,6 +87,23 @@ export function mountExperiment(element, options = {}) {
     disposed = false,
     retry = null,
     drag = null;
+  const inference = {
+    modelState: "Not loaded",
+    completedRequests: 0,
+    notesEmbedded: 0,
+    lastQueryMs: null,
+  };
+  function renderInferenceStats() {
+    $("model-state").textContent = inference.modelState;
+    $("request-count").textContent = String(inference.completedRequests);
+    $("note-count").textContent = String(inference.notesEmbedded);
+    $("query-time").textContent =
+      inference.lastQueryMs === null
+        ? "Not run yet"
+        : inference.lastQueryMs < 1000
+          ? `${Math.max(1, Math.round(inference.lastQueryMs))} ms`
+          : `${(inference.lastQueryMs / 1000).toFixed(2)} s`;
+  }
   const cleanups = [];
   const on = (target, type, fn, opts) => {
     target.addEventListener(type, fn, opts);
@@ -117,6 +135,8 @@ export function mountExperiment(element, options = {}) {
     worker?.terminate();
     worker = null;
     loaded = false;
+    inference.modelState = "Not loaded";
+    renderInferenceStats();
     if (pending) {
       pending.reject(new Error("cancelled"));
       pending = null;
@@ -125,11 +145,13 @@ export function mountExperiment(element, options = {}) {
     $("progress").value = 0;
     status(message);
   }
-  function run(type, texts = []) {
+  function run(type, texts = [], purpose = "notes") {
     if (disposed) return Promise.reject(new Error("cancelled"));
     if (busy) cancel(undefined, false);
     const id = ++sequence;
     busyState(true);
+    inference.modelState = loaded ? "Ready" : "Loading";
+    renderInferenceStats();
     act("retry").hidden = true;
     $("progress").removeAttribute("value");
     status(
@@ -152,6 +174,8 @@ export function mountExperiment(element, options = {}) {
             $("progress").value = p.progress || 0;
           } else if (p.status === "embedding") {
             loaded = true;
+            inference.modelState = "Ready";
+            renderInferenceStats();
             status(`Embedding ${p.completed} of ${p.total} locally…`);
             $("progress").value = (p.completed / p.total) * 100;
           }
@@ -164,10 +188,19 @@ export function mountExperiment(element, options = {}) {
           worker?.terminate();
           worker = null;
           loaded = false;
+          inference.modelState = "Error";
+          renderInferenceStats();
           act("load").hidden = false;
           job?.reject(new Error(data.message));
         } else {
           if (job?.type !== "project") loaded = true;
+          inference.modelState = loaded ? "Ready" : "Not loaded";
+          if (data.embeddings?.length) {
+            inference.completedRequests++;
+            if (job?.purpose === "notes")
+              inference.notesEmbedded += data.embeddings.length;
+          }
+          renderInferenceStats();
           act("load").hidden = loaded;
           job?.resolve(data);
         }
@@ -179,6 +212,8 @@ export function mountExperiment(element, options = {}) {
         worker?.terminate();
         worker = null;
         loaded = false;
+        inference.modelState = "Error";
+        renderInferenceStats();
         busyState(false);
         job?.reject(
           new Error(
@@ -188,7 +223,7 @@ export function mountExperiment(element, options = {}) {
       };
     }
     return new Promise((resolve, reject) => {
-      pending = { resolve, reject, type };
+      pending = { resolve, reject, type, purpose };
       worker.postMessage({ id, type, texts, assetBase });
     });
   }
@@ -472,13 +507,19 @@ export function mountExperiment(element, options = {}) {
     if (busy) cancel(undefined, false);
     queryInput.value = text;
     const cached = precomputed.collections[collection.id]?.examples[text];
+    const isFreshSemantic = !cached && mode === "semantic";
+    const startedAt = performance.now();
     try {
       const vector =
         cached ||
         (mode === "keyword"
           ? null
-          : (await run("embed", [text])).embeddings[0]);
+          : (await run("embed", [text], "query")).embeddings[0]);
       if (disposed || token !== operation) return;
+      if (isFreshSemantic) {
+        inference.lastQueryMs = performance.now() - startedAt;
+        renderInferenceStats();
+      }
       query = text;
       queryVector = vector;
       rank();
@@ -751,7 +792,10 @@ export function mountExperiment(element, options = {}) {
   if (typeof IntersectionObserver !== "undefined") {
     const visibility = new IntersectionObserver(
       (entries) => {
-        if (!entries[0].isIntersecting && busy)
+        // Only one root is observed. A batch can contain multiple transitions;
+        // apply its newest state, not an obsolete hidden entry at the start.
+        const latest = entries.at(-1);
+        if (latest && !latest.isIntersecting && busy)
           cancel(
             "Paused while the experiment is off screen. Your collection is unchanged.",
           );

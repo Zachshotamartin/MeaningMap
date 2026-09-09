@@ -1,5 +1,5 @@
 .meaning-map {
-  --mm-bg: #142422;
+  --mm-bg: #142321;
   --mm-panel: #1c3029;
   --mm-text: #e7ece1;
   --mm-muted: #afc1b5;
@@ -206,7 +206,7 @@
   min-width: 0;
 }
 .meaning-map .mm-map-panel {
-  background: #192b25;
+  background: var(--mm-bg);
   border: 1px solid var(--mm-line);
   border-radius: 8px;
   overflow: hidden;
@@ -282,7 +282,7 @@
   background: var(--group);
   border: 1px solid var(--group);
   border-radius: 50%;
-  box-shadow: 0 0 0 4px #192b25;
+  box-shadow: 0 0 0 4px var(--mm-bg);
 }
 .meaning-map .mm-node.is-match span {
   width: 13px;
@@ -293,14 +293,14 @@
 }
 .meaning-map .mm-node.is-selected span {
   box-shadow:
-    0 0 0 5px #192b25,
+    0 0 0 5px var(--mm-bg),
     0 0 0 6px var(--group);
   width: 15px;
   height: 15px;
 }
 .meaning-map .mm-node:hover span {
   box-shadow:
-    0 0 0 5px #192b25,
+    0 0 0 5px var(--mm-bg),
     0 0 0 6px var(--group);
 }
 .meaning-map .mm-node-label {
@@ -309,7 +309,7 @@
   font-weight: 400;
   padding: 2px 6px;
   line-height: 22px;
-  background: #192b25e8;
+  background: #142321e8;
   border-radius: 3px;
   color: #c7d0c1;
   white-space: nowrap;
@@ -506,6 +506,27 @@
 }
 .meaning-map [hidden] {
   display: none !important;
+}
+.meaning-map .mm-inference-stats {
+  margin-bottom: 18px;
+  padding: 14px 0 18px;
+  border-top: 1px solid var(--mm-line);
+}
+.meaning-map .mm-inference-stats dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin: 0 0 12px;
+}
+.meaning-map .mm-inference-stats dt,
+.meaning-map .mm-inference-stats p {
+  color: var(--mm-muted);
+  font-size: 14px;
+}
+.meaning-map .mm-inference-stats dd {
+  margin: 3px 0 0;
+  font-size: 18px;
+  color: var(--mm-text);
 }
 .meaning-map .mm-collection-editor {
   border-top: 1px solid var(--mm-line);
