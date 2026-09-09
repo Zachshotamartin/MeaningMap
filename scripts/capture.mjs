@@ -36,6 +36,7 @@ async function capture(name) {
     .meaning-map .mm-legend { padding-bottom: 12px; }
   `,
   });
+  await expect(page.locator(".mm-node-label.is-selected")).toBeVisible();
   const png = await panel.screenshot({
     path: `examples/${name}.png`,
     omitBackground: true,
@@ -47,11 +48,14 @@ async function capture(name) {
 }
 try {
   await page.goto(base);
+  await expect(page.locator(".mm-node")).toHaveCount(60);
+  await expect(page.locator("[data-ui=model-state]")).toHaveText("Ready", {
+    timeout: 90000,
+  });
   await page.screenshot({
     path: "examples/meaning-map-search-first.png",
     fullPage: true,
   });
-  await page.locator(".mm-map-section > summary").click();
   await capture("meaning-map-cooler-city");
   await page.locator("[data-ui=collection]").selectOption("studio-notebook");
   await page
@@ -66,9 +70,11 @@ try {
     "The spoken interface",
   );
   await capture("meaning-map-accessible-studio");
+  await page.locator(".mm-activity > summary").click();
   await page
     .locator(".mm-inference-stats")
     .screenshot({ path: "examples/meaning-map-inference-stats.png" });
+  await page.locator(".mm-activity > summary").click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "examples/mobile-390.png", fullPage: true });
 } finally {

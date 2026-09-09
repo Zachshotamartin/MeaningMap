@@ -58,3 +58,13 @@ Requires Node >=22. The first run downloads the two candidate q8 encoders from t
 - [E5-small-v2 official model card](https://huggingface.co/intfloat/e5-small-v2): mean pooling and normalization, `query: ` and `passage: ` prefixes. MIT. ONNX conversion: `Xenova/e5-small-v2`, revision `02af79985278377e65c724a76275707cb0333c70`.
 
 The official BGE author's CLS pooling instructions take precedence over the generic mean-pooling snippet on the conversion card. The report records each actual configuration so this detail can be reviewed.
+
+## Separate 120-note expansion (PR4)
+
+The current UI uses `src/data/collections-v2.js`: the unchanged original 80 notes plus 40 new notes. The 64-query comparison above still targets only the frozen original corpus. It must not be quoted as current-corpus accuracy.
+
+Before generating the expanded embeddings or measuring retrieval, 24 additional queries and relevance labels were written in `expanded-probes.js`. `npm run prepare:data:expanded` embeds all 120 notes and eight UI examples with the unchanged MiniLM q8 model, writes a content-hashed public JSON seed, then writes every diagnostic prediction and metric to `expanded-results.json`. Query and collection source hashes accompany the output. Queries are distinct from the UI example chips. Only the example-chip phrasing was refined after inspecting the initial map; diagnostic queries, labels and note text were not changed in response to scores.
+
+Relevant notes ranked first in **18/24** queries and within three in **24/24**. This is a small authored relevance diagnostic, not an independent benchmark, general accuracy estimate or calibrated confidence measure. It is separate from both earlier diagnostics; no encoder training or selection was done on it.
+
+The six strict first-place misses remain in the report: finger-sized targets, next keyboard focus, returning focus after a popup, a participant's first unassisted attempt, separating research observations from interpretation, and an empty collection's first step. Each retrieved a related older note first and the specifically labeled newer note second or third. Some older notes could also be useful matches, but labels were not broadened after observing the results. The focus/keyboard cases illustrate the model's difficulty distinguishing closely related interaction details.
