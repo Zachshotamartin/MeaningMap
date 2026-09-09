@@ -9,6 +9,13 @@ test("instant genuine presets, keyword contrast, map keys, and portable export",
   });
   await page.goto("/");
   await expect(page.locator(".mm-node")).toHaveCount(40);
+  await expect(page.locator('[data-ui="model-state"]')).toHaveText(
+    "Not loaded",
+  );
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("0");
+  await expect(page.locator('[data-ui="query-time"]')).toHaveText(
+    "Not run yet",
+  );
   await expect(page.locator(".mm-result").first()).toContainText(
     "The white roof",
   );
@@ -31,7 +38,7 @@ test("instant genuine presets, keyword contrast, map keys, and portable export",
     "A reversible first step",
   );
   expect(modelRequests).toEqual([]);
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export collection (.json)" }).click();
   const download = await downloadPromise;
@@ -65,7 +72,13 @@ test("actual WASM model handles a fresh query and a new pasted note under self-o
   await expect(page.locator(".mm-result").first()).toContainText(
     "Shade is infrastructure",
   );
-  await page.locator("summary").click();
+  await expect(page.locator('[data-ui="model-state"]')).toHaveText("Ready");
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("1");
+  await expect(page.locator('[data-ui="note-count"]')).toHaveText("0");
+  await expect(page.locator('[data-ui="query-time"]')).toHaveText(
+    /^\d+(\.\d+)? (ms|s)$/,
+  );
+  await page.locator(".mm-collection-editor > summary").click();
   await page.getByLabel("Title", { exact: true }).fill("Bottle-fed balcony");
   await page
     .getByLabel("Note", { exact: true })
@@ -78,6 +91,8 @@ test("actual WASM model handles a fresh query and a new pasted note under self-o
   });
   await expect(page.locator(".mm-node")).toHaveCount(41);
   await expect(page.locator(".mm-detail")).toContainText("Bottle-fed balcony");
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("2");
+  await expect(page.locator('[data-ui="note-count"]')).toHaveText("1");
   await page
     .locator("[data-ui=query]")
     .fill("Keep my tomato plants watered during a trip.");
@@ -86,6 +101,8 @@ test("actual WASM model handles a fresh query and a new pasted note under self-o
   await expect(page.locator(".mm-result").first()).toContainText(
     "Bottle-fed balcony",
   );
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("3");
+  await expect(page.locator('[data-ui="note-count"]')).toHaveText("1");
   expect(errors).toEqual([]);
   expect(external).toEqual([]);
 });
@@ -101,6 +118,8 @@ test("model failure, retry, cancellation, and stale requests preserve data", asy
   await expect(status(page)).toContainText("Could not complete", {
     timeout: 60000,
   });
+  await expect(page.locator('[data-ui="model-state"]')).toHaveText("Error");
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("0");
   await expect(
     page.getByRole("button", { name: "Retry", exact: true }),
   ).toBeVisible();
@@ -126,6 +145,10 @@ test("explicit cancel stops work and example supersedes pending fresh search", a
     .click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(status(page)).toContainText("Cancelled");
+  await expect(page.locator('[data-ui="model-state"]')).toHaveText(
+    "Not loaded",
+  );
+  await expect(page.locator('[data-ui="request-count"]')).toHaveText("0");
   await page
     .locator("[data-ui=query]")
     .fill("A query waiting behind a download");
@@ -147,7 +170,7 @@ test("import rejects invalid data, embeds valid plain text, and safely renders m
   page,
 }) => {
   await page.goto("/");
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   await page.locator("[data-ui=import]").setInputFiles({
     name: "bad.json",
     mimeType: "application/json",
@@ -218,7 +241,7 @@ test("a reset supersedes a slow file read without creating a stale collection", 
     };
   });
   await page.goto("/");
-  await page.locator("summary").click();
+  await page.locator(".mm-collection-editor > summary").click();
   const value = {
     version: 1,
     title: "Late import",
@@ -267,4 +290,84 @@ test("fresh keyword search stays lightweight until semantic comparison is reques
   await expect(page.locator(".mm-result").first()).toContainText(
     "Shade is infrastructure",
   );
+});
+
+test("newest visible entry in a batched observer notification preserves a busy model request", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+      observe(target) {
+        window.deliverMeaningMapVisibility = (states) =>
+          this.callback(
+            states.map((isIntersecting, index) => ({
+              target,
+              isIntersecting,
+              time: index,
+            })),
+            this,
+          );
+      }
+      disconnect() {
+        delete window.deliverMeaningMapVisibility;
+      }
+    };
+  });
+  let release;
+  const blocked = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/models/**", async (route) => {
+    await blocked;
+    await route.continue().catch(() => {});
+  });
+  try {
+    await page.goto("/");
+    await page
+      .locator("[data-ui=query]")
+      .fill("Protect people from hot summer afternoons using trees and shade.");
+    await page.getByRole("button", { name: "Find connections" }).click();
+    await expect(page.locator('[data-ui="model-state"]')).toHaveText("Loading");
+    await expect(
+      page.getByRole("button", { name: "Cancel", exact: true }),
+    ).toBeVisible();
+    await page.evaluate(() =>
+      window.deliverMeaningMapVisibility([false, true]),
+    );
+    await expect(
+      page.getByRole("button", { name: "Cancel", exact: true }),
+    ).toBeVisible();
+    await expect(status(page)).not.toContainText("Paused");
+    await expect(page.locator('[data-ui="request-count"]')).toHaveText("0");
+    await page.evaluate(() => window.deliverMeaningMapVisibility([]));
+    release();
+    await expect(status(page)).toContainText("Search complete", {
+      timeout: 90000,
+    });
+    await expect(page.locator('[data-ui="model-state"]')).toHaveText("Ready");
+    await expect(page.locator('[data-ui="request-count"]')).toHaveText("1");
+    await expect(page.locator(".mm-result").first()).toContainText(
+      "Shade is infrastructure",
+    );
+    // Conversely, a newest hidden entry must still cancel. Trigger both the
+    // request and the callback in one task, before a worker result can arrive.
+    await page.evaluate(() => {
+      document.querySelector("[data-ui=query]").value =
+        "A different fresh thought about shade.";
+      document.querySelector(".mm-query-form").requestSubmit();
+      window.deliverMeaningMapVisibility([true, false]);
+    });
+    await expect(status(page)).toContainText(
+      "Paused while the experiment is off screen",
+    );
+    await expect(page.locator('[data-ui="model-state"]')).toHaveText(
+      "Not loaded",
+    );
+    await expect(page.locator('[data-ui="request-count"]')).toHaveText("1");
+  } finally {
+    release();
+  }
 });

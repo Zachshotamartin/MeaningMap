@@ -2,6 +2,8 @@
 
 A working semantic notebook. Search for an idea, compare semantic and literal word rankings, select notes in a map, follow related thoughts, and add your own text. The two original collections contain **80 notes**: Field notes and Studio notebook, 40 each.
 
+The in-app guide remains visible in standalone and embedded mode. It explains the cooling-buildings → reflective-roofs example, dots as notes, authored color groups, nearest-neighbor lines, approximate map distances, and semantic versus literal ranking. Its expandable model explanation distinguishes pretrained MiniLM from the 80 searchable notes, explains why adding notes needs no retraining, links to the official upstream model card, and presents the 16-query diagnostic with its limits.
+
 ![Actual Meaning Map interface](examples/meaning-map-cooler-city.png)
 
 ## Run
@@ -22,7 +24,7 @@ npm run test:browser
 npm run capture
 ```
 
-`test:browser` starts the production server when needed. `capture` also starts it when needed and writes two screenshots from the actual UI. Build first. The source of both standalone and embedded experiences is `src/index.js`.
+`test:browser` starts the production server when needed. `capture` also starts it when needed and writes two focused map previews from the actual UI, plus mobile and inference-statistics verification images. Primary previews contain only the map panel and legend, at 2× pixel density. Build first. The source of both standalone and embedded experiences is `src/index.js`.
 
 ## What is actually learned
 
@@ -65,6 +67,8 @@ The npm Transformers.js package is a development dependency for regenerating emb
 A maximum of 100 notes bounds computation. Each note has a 100-character title, 1,800-character body, and 40-character group. Queries are capped at 600 characters. Tokenization truncates long input to the model's configured 512-token limit. English short paragraphs work best; similarity can miss negation, nuance, names, or facts, and can reflect the encoder's biases. Scores are not confidence or truthfulness estimates.
 
 Cancellation terminates the worker, including model loading. A separate operation epoch protects async file reads and multi-stage add/import operations; late completions cannot replace a newer request. Hidden/offscreen work is cancelled. Disposal releases listeners, observers, pointer capture, and the worker. There is no continuous animation or computation when idle.
+
+The statistics strip reports this visit's model state, completed embedding requests, successfully embedded note texts, and the last fresh semantic query's elapsed time. Query timing includes model loading when needed. A batch of imported notes counts as one request; each embedded note contributes to the note counter. Cached examples, keyword search, projection-only work, and failed/cancelled requests do not increment completed request counts. These are inference measurements for a pretrained encoder, not training metrics. Counters persist across preset changes and reset on unmount.
 
 ## Keyboard, mobile, and collection files
 
