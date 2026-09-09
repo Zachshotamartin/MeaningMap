@@ -1,0 +1,4 @@
+# Preserve the exact upstream assets and their recorded integrity hashes.
+public/runtime/** -whitespace linguist-vendored
+public/models/** linguist-vendored
+src/data/embeddings.json linguist-generated

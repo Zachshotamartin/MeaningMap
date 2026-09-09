@@ -1,0 +1,26 @@
+{
+  "transformers": "3.8.1",
+  "onnx": "1.22.0-dev.20250409-89f8206ba4",
+  "files": [
+    {
+      "file": "runtime/transformers-3.8.1.min.js",
+      "bytes": 888173,
+      "sha256": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa"
+    },
+    {
+      "file": "runtime/TRANSFORMERS-LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "file": "runtime/onnx-1.22.0-dev-89f8206ba4/ort-wasm-simd-threaded.mjs",
+      "bytes": 20856,
+      "sha256": "43c25054b6b9ac000f786c65545ff83a45f871e0e310e8c2f4d48a363bb66db4"
+    },
+    {
+      "file": "runtime/onnx-1.22.0-dev-89f8206ba4/ort-wasm-simd-threaded.wasm",
+      "bytes": 11133407,
+      "sha256": "f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b"
+    }
+  ]
+}

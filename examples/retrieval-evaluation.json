@@ -1,0 +1,716 @@
+{
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+  "dtype": "q8",
+  "count": 16,
+  "notes": "Small authored diagnostic set, held out from example queries. Not a general-purpose model benchmark or evidence of training.",
+  "semantic": {
+    "hitAt1": 0.8125,
+    "hitAt3": 0.9375,
+    "MRR": 0.8794642857142857
+  },
+  "keyword": {
+    "hitAt1": 0.5,
+    "hitAt3": 0.625,
+    "MRR": 0.60380291005291
+  },
+  "probes": [
+    {
+      "collection": "field-notes",
+      "query": "I want to escape the hot sun on my afternoon walk.",
+      "relevant": [
+        "f01",
+        "f04"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "f04",
+          "title": "The evening route",
+          "cosine": 0.43994217626168297
+        },
+        {
+          "id": "f01",
+          "title": "Shade is infrastructure",
+          "cosine": 0.35683244238601847
+        },
+        {
+          "id": "f02",
+          "title": "The white roof",
+          "cosine": 0.31889038908173284
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f01",
+          "title": "Shade is infrastructure",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f02",
+          "title": "The white roof",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f09",
+          "title": "Borrow a drill",
+          "overlap": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Can I fix a broken toaster with help from my neighbors?",
+      "relevant": [
+        "f10"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 2,
+      "semanticTop3": [
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "cosine": 0.3989295818869243
+        },
+        {
+          "id": "f09",
+          "title": "Borrow a drill",
+          "cosine": 0.2681555235847299
+        },
+        {
+          "id": "f11",
+          "title": "Recipes without an owner",
+          "cosine": 0.2265390269549102
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f06",
+          "title": "A bench with a back",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "f24",
+          "title": "Make boredom possible",
+          "overlap": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Keep a hard disk failure from wiping out my pictures.",
+      "relevant": [
+        "f26",
+        "f25",
+        "f32"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 27,
+      "semanticTop3": [
+        {
+          "id": "f26",
+          "title": "Three copies, two places",
+          "cosine": 0.3955973582013194
+        },
+        {
+          "id": "f25",
+          "title": "A negative becomes a file",
+          "cosine": 0.31095987749147697
+        },
+        {
+          "id": "f32",
+          "title": "An archive can migrate",
+          "cosine": 0.28955616384735083
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f07",
+          "title": "Night belongs to moths",
+          "overlap": 0.125
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "overlap": 0.125
+        },
+        {
+          "id": "f28",
+          "title": "The mended sleeve",
+          "overlap": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Give insects food after the spring blossoms fade.",
+      "relevant": [
+        "f38"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 6,
+      "semanticTop3": [
+        {
+          "id": "f38",
+          "title": "A bee needs a season",
+          "cosine": 0.4945424368468116
+        },
+        {
+          "id": "f39",
+          "title": "Listen before counting",
+          "cosine": 0.3473225503245177
+        },
+        {
+          "id": "f34",
+          "title": "Diversity buys time",
+          "cosine": 0.3362401834487003
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f07",
+          "title": "Night belongs to moths",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f12",
+          "title": "Seeds in envelopes",
+          "overlap": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "A flood should soak into the ground instead of overloading pipes.",
+      "relevant": [
+        "f03",
+        "f05"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "cosine": 0.500675205026684
+        },
+        {
+          "id": "f03",
+          "title": "Room for rain",
+          "cosine": 0.3518648950360156
+        },
+        {
+          "id": "f16",
+          "title": "The commons needs edges",
+          "cosine": 0.23964014247087245
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f03",
+          "title": "Room for rain",
+          "overlap": 0.375
+        },
+        {
+          "id": "f02",
+          "title": "The white roof",
+          "overlap": 0.125
+        },
+        {
+          "id": "f05",
+          "title": "Repairing a river",
+          "overlap": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Too many pings make it impossible to concentrate.",
+      "relevant": [
+        "f17",
+        "f23"
+      ],
+      "semanticRank": 2,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "f24",
+          "title": "Make boredom possible",
+          "cosine": 0.39124129753423786
+        },
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "cosine": 0.30261089073628167
+        },
+        {
+          "id": "f20",
+          "title": "Walking around a problem",
+          "cosine": 0.2848442805387927
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "f22",
+          "title": "The small finish",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "f24",
+          "title": "Make boredom possible",
+          "overlap": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "Mend my favorite coat instead of throwing it away.",
+      "relevant": [
+        "f28"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 28,
+      "semanticTop3": [
+        {
+          "id": "f28",
+          "title": "The mended sleeve",
+          "cosine": 0.31649290942950503
+        },
+        {
+          "id": "f13",
+          "title": "The free shelf",
+          "cosine": 0.2027175082873047
+        },
+        {
+          "id": "f37",
+          "title": "The compost clock",
+          "cosine": 0.14825347447235035
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f02",
+          "title": "The white roof",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f03",
+          "title": "Room for rain",
+          "overlap": 0.14285714285714285
+        },
+        {
+          "id": "f22",
+          "title": "The small finish",
+          "overlap": 0.14285714285714285
+        }
+      ]
+    },
+    {
+      "collection": "field-notes",
+      "query": "I need a power tool for just one weekend.",
+      "relevant": [
+        "f09"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "f09",
+          "title": "Borrow a drill",
+          "cosine": 0.3801663950721331
+        },
+        {
+          "id": "f10",
+          "title": "The repair table",
+          "cosine": 0.2331032919479759
+        },
+        {
+          "id": "f19",
+          "title": "A place for loose thoughts",
+          "cosine": 0.1147755084046403
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "f09",
+          "title": "Borrow a drill",
+          "overlap": 0.3333333333333333
+        },
+        {
+          "id": "f11",
+          "title": "Recipes without an owner",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "f17",
+          "title": "One clear window",
+          "overlap": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Someone pressed the wrong control and wants their previous work back.",
+      "relevant": [
+        "s02",
+        "s08"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "s02",
+          "title": "Show the way back",
+          "cosine": 0.43394043795116755
+        },
+        {
+          "id": "s16",
+          "title": "Errors with directions",
+          "cosine": 0.36888985168299526
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "cosine": 0.32148285861060233
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s02",
+          "title": "Show the way back",
+          "overlap": 0.25
+        },
+        {
+          "id": "s03",
+          "title": "Permission at the moment",
+          "overlap": 0.125
+        },
+        {
+          "id": "s04",
+          "title": "A price with no trapdoor",
+          "overlap": 0.125
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "How can a blind visitor understand the page?",
+      "relevant": [
+        "s09"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "s09",
+          "title": "The spoken interface",
+          "cosine": 0.4841216033963277
+        },
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "cosine": 0.3793085864229945
+        },
+        {
+          "id": "s15",
+          "title": "A transcript travels further",
+          "cosine": 0.32687841644227505
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s09",
+          "title": "The spoken interface",
+          "overlap": 0.25
+        },
+        {
+          "id": "s14",
+          "title": "Zoom is a normal use",
+          "overlap": 0.25
+        },
+        {
+          "id": "s33",
+          "title": "The slow network is real",
+          "overlap": 0.25
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "The newest response should replace the earlier search, even if it finishes first.",
+      "relevant": [
+        "s34"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "s34",
+          "title": "Old work must not win",
+          "cosine": 0.6772082824211914
+        },
+        {
+          "id": "s24",
+          "title": "A control for novelty",
+          "cosine": 0.23133129895495586
+        },
+        {
+          "id": "s23",
+          "title": "The average hides a queue",
+          "cosine": 0.19868979763917194
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s34",
+          "title": "Old work must not win",
+          "overlap": 0.3
+        },
+        {
+          "id": "s30",
+          "title": "An honest empty state",
+          "overlap": 0.2
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "overlap": 0.1
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "People click a lot because they are lost. Are we measuring success wrong?",
+      "relevant": [
+        "s17",
+        "s22"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 2,
+      "semanticTop3": [
+        {
+          "id": "s17",
+          "title": "Measure the useful thing",
+          "cosine": 0.4825894709267328
+        },
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "cosine": 0.460160466866386
+        },
+        {
+          "id": "s23",
+          "title": "The average hides a queue",
+          "cosine": 0.27422922210793105
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "overlap": 0.3333333333333333
+        },
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "overlap": 0.3333333333333333
+        },
+        {
+          "id": "s18",
+          "title": "Listen for the workaround",
+          "overlap": 0.2222222222222222
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Let people move their data into a different app.",
+      "relevant": [
+        "s36"
+      ],
+      "semanticRank": 14,
+      "keywordRank": 14,
+      "semanticTop3": [
+        {
+          "id": "s03",
+          "title": "Permission at the moment",
+          "cosine": 0.2057291078170707
+        },
+        {
+          "id": "s35",
+          "title": "A worker takes the heavy part",
+          "cosine": 0.17487729530686905
+        },
+        {
+          "id": "s18",
+          "title": "Listen for the workaround",
+          "cosine": 0.17412349611049482
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "overlap": 0.2857142857142857
+        },
+        {
+          "id": "s20",
+          "title": "The missing participants",
+          "overlap": 0.2857142857142857
+        },
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "overlap": 0.2857142857142857
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "The spinning animation makes me dizzy.",
+      "relevant": [
+        "s12",
+        "s31"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 4,
+      "semanticTop3": [
+        {
+          "id": "s12",
+          "title": "Motion with an off switch",
+          "cosine": 0.4176728459438614
+        },
+        {
+          "id": "s31",
+          "title": "The transition explains itself",
+          "cosine": 0.2515272919056012
+        },
+        {
+          "id": "s33",
+          "title": "The slow network is real",
+          "cosine": 0.22272055311499975
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "overlap": 0.2
+        },
+        {
+          "id": "s03",
+          "title": "Permission at the moment",
+          "overlap": 0.2
+        },
+        {
+          "id": "s05",
+          "title": "A draft is a safe place",
+          "overlap": 0.2
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "A long calculation makes all of the buttons freeze.",
+      "relevant": [
+        "s35"
+      ],
+      "semanticRank": 1,
+      "keywordRank": 10,
+      "semanticTop3": [
+        {
+          "id": "s35",
+          "title": "A worker takes the heavy part",
+          "cosine": 0.5295546125354589
+        },
+        {
+          "id": "s13",
+          "title": "A thumb-sized promise",
+          "cosine": 0.3852022778202799
+        },
+        {
+          "id": "s22",
+          "title": "Watch the quiet moment",
+          "cosine": 0.3650909388980249
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "s03",
+          "title": "Permission at the moment",
+          "overlap": 0.16666666666666666
+        },
+        {
+          "id": "s05",
+          "title": "A draft is a safe place",
+          "overlap": 0.16666666666666666
+        }
+      ]
+    },
+    {
+      "collection": "studio-notebook",
+      "query": "Try an idea privately before making it visible to everyone.",
+      "relevant": [
+        "s05",
+        "s01"
+      ],
+      "semanticRank": 2,
+      "keywordRank": 1,
+      "semanticTop3": [
+        {
+          "id": "s25",
+          "title": "Spend pixels on the idea",
+          "cosine": 0.353545681459003
+        },
+        {
+          "id": "s01",
+          "title": "A reversible first step",
+          "cosine": 0.3133628294605842
+        },
+        {
+          "id": "s05",
+          "title": "A draft is a safe place",
+          "cosine": 0.28512676832333
+        }
+      ],
+      "keywordTop3": [
+        {
+          "id": "s05",
+          "title": "A draft is a safe place",
+          "overlap": 0.42857142857142855
+        },
+        {
+          "id": "s25",
+          "title": "Spend pixels on the idea",
+          "overlap": 0.2857142857142857
+        },
+        {
+          "id": "s04",
+          "title": "A price with no trapdoor",
+          "overlap": 0.14285714285714285
+        }
+      ]
+    }
+  ]
+}

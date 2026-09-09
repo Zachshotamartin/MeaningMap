@@ -1,0 +1,775 @@
+import { collections, MODEL, textForNote } from "./data/collections.js";
+import precomputed from "./data/embeddings.json";
+import {
+  rankSemantic,
+  rankKeywords,
+  cosine,
+  validateCollection,
+  serializeCollection,
+} from "./math.js";
+
+export const metadata = {
+  id: "meaning-map",
+  title: "Meaning Map",
+  description:
+    "A notebook you can search by meaning. Explore real sentence embeddings, compare literal matches, and add your own ideas.",
+  instructions: [
+    "Choose a collection, try an example, or search in your own words.",
+    "Select a dot or ranked result to read a note and follow its nearest neighbors.",
+    "Use arrow keys between map notes. Zoom with the buttons; Fit map restores the overview.",
+    "Add or import notes in Your collection, then export to keep your work.",
+  ],
+  limitations: [
+    "English sentence embeddings can miss nuance and reflect training bias. Cosine similarity is not confidence.",
+    "The PCA map compresses 384 dimensions into two. Visual distance is approximate; ranking uses full embeddings.",
+    "Fresh text loads a 23 MB pretrained model and 11 MB runtime on demand, then runs locally. No note text is transmitted.",
+    "Collections hold up to 100 notes. Notes are limited to 1,800 characters; the model truncates at 512 tokens. Export your work before closing the tab.",
+  ],
+  technique:
+    "Pretrained MiniLM sentence encoder · quantized ONNX · cosine retrieval · deterministic PCA",
+};
+const palette = [
+  "#b8cd99",
+  "#d99976",
+  "#d9c394",
+  "#a0c1bf",
+  "#c7b5a2",
+  "#b4bba9",
+];
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+let mounts = 0;
+export function mountExperiment(element, options = {}) {
+  const uid = `mm-${++mounts}`;
+  const root = el("section", "meaning-map");
+  root.setAttribute("aria-label", "Meaning Map experiment");
+  root.innerHTML = `<header class="mm-header"><div><p class="mm-eyebrow">A SEMANTIC NOTEBOOK / EXPERIMENT 02</p><h2>Meaning Map<span aria-hidden="true"> ↗</span></h2><p class="mm-intro">Find the thought, even when the words are different.</p></div><div class="mm-model"><span class="mm-model-dot"></span><span>MiniLM · 384 dimensions<br><small>Pretrained model · local inference</small></span></div></header>
+ <div class="mm-searchbar"><label class="mm-collection-label">Collection<select data-ui="collection"></select></label><form class="mm-query-form"><label for="${uid}-query">Search an idea</label><div class="mm-query-row"><input id="${uid}-query" data-ui="query" maxlength="600" autocomplete="off" placeholder="Describe what you are looking for…" required><button class="mm-primary" type="submit">Find connections</button></div></form></div>
+ <div class="mm-example-row"><span class="mm-small">Try a thought</span><div data-ui="examples" class="mm-examples"></div></div>
+ <div class="mm-workspace"><div class="mm-map-column"><div class="mm-map-panel"><div class="mm-map-heading"><div><h3>Semantic landscape</h3><span data-ui="map-count" class="mm-small"></span></div><div class="mm-map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit">Fit map</button></div></div><div data-ui="map" class="mm-map" tabindex="0" role="group" aria-label="Note map. Select a note with Tab, navigate notes with arrow keys. When the map has focus, arrows pan and plus or minus zoom."><svg class="mm-edges" aria-hidden="true"></svg><div data-ui="nodes" class="mm-nodes"></div><div data-ui="labels" class="mm-labels" aria-hidden="true"></div><div class="mm-map-caption">NEARBY IDEAS, DIFFERENT WORDS</div></div><div data-ui="legend" class="mm-legend"></div><p class="mm-map-footnote">2D PCA projection · distances are approximate. Rankings use all 384 dimensions.</p></div><article data-ui="detail" class="mm-detail" aria-label="Selected note"></article></div>
+ <aside class="mm-results"><div class="mm-results-header"><h3>Closest thoughts</h3><span data-ui="result-count" class="mm-small"></span></div><div class="mm-tabs" role="group" aria-label="Ranking method"><button data-mode="semantic" aria-pressed="true">Semantic</button><button data-mode="keyword" aria-pressed="false">Keyword</button></div><p data-ui="ranking-info" class="mm-ranking-info"></p><ol data-ui="results" class="mm-result-list"></ol><p class="mm-score-note">Cosine similarity is a relationship between vectors, not a probability or a factual judgment.</p></aside></div>
+ <div class="mm-statusbar"><p data-ui="status" role="status" aria-live="polite">Examples are ready. Fresh text loads the model only when you need it.</p><progress data-ui="progress" max="100" value="0" hidden aria-label="Model loading progress"></progress><button data-action="cancel" hidden>Cancel</button><button data-action="retry" hidden>Retry</button><button data-action="load">Load local model</button></div>
+ <details class="mm-collection-editor"><summary>Your collection <span class="mm-small">Add notes, import, or take a copy</span></summary><div class="mm-editor-body"><form class="mm-add-form"><h3>Add a thought</h3><label>Title<input name="title" required maxlength="100" placeholder="A short, useful title"></label><label>Note<textarea name="text" required maxlength="1800" rows="3" placeholder="Paste a thought or a paragraph. It stays in this browser tab."></textarea></label><label>Group<input name="group" maxlength="40" value="My notes" required></label><button class="mm-primary" type="submit">Embed & add note</button></form><div class="mm-file-tools"><h3>Make it yours</h3><p>Up to 100 notes per collection. Added notes stay in this tab until you export them.</p><button data-action="export">Export collection (.json)</button><label class="mm-file-label">Import collection<input data-ui="import" type="file" accept="application/json,.json"></label><button data-action="reset">Reset to preset</button><p class="mm-small">Import validates the text and regenerates every embedding with the same model. Existing notes are replaced only after success.</p></div></div></details>
+ <footer class="mm-footer">Original notes + real pretrained embeddings. <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2" target="_blank" rel="noreferrer">MiniLM model · Apache 2.0</a><span>No server inference. No API key.</span></footer>`;
+  if (options.embedded) root.querySelector(".mm-header").remove();
+  element.append(root);
+  const $ = (name) => root.querySelector(`[data-ui="${name}"]`);
+  const act = (name) => root.querySelector(`[data-action="${name}"]`);
+  const collectionSelect = $("collection"),
+    queryInput = $("query"),
+    map = $("map");
+  for (const c of collections) {
+    const o = el("option", "", c.title);
+    o.value = c.id;
+    collectionSelect.append(o);
+  }
+  let collection,
+    embeddings,
+    points,
+    queryVector,
+    query = "",
+    selected = 0,
+    mode = "semantic",
+    ranking = [],
+    zoom = 1,
+    pan = [0, 0],
+    worker = null,
+    sequence = 0,
+    operation = 0,
+    pending = null,
+    busy = false,
+    loaded = false,
+    disposed = false,
+    retry = null,
+    drag = null;
+  const cleanups = [];
+  const on = (target, type, fn, opts) => {
+    target.addEventListener(type, fn, opts);
+    cleanups.push(() => target.removeEventListener(type, fn, opts));
+  };
+  const assetBase = new URL(
+    options.assetBase || "./",
+    document.baseURI,
+  ).href.replace(/\/?$/, "/");
+  const status = (message, error = false) => {
+    $("status").textContent = message;
+    $("status").classList.toggle("mm-error", error);
+  };
+  function busyState(value) {
+    busy = value;
+    act("cancel").hidden = !value;
+    $("progress").hidden = !value;
+    root.querySelector(".mm-query-form button").disabled = value;
+    root.querySelector(".mm-add-form button").disabled = value;
+    collectionSelect.disabled = value;
+    act("load").hidden = value || loaded;
+  }
+  function cancel(
+    message = "Cancelled. Your collection is unchanged.",
+    invalidate = true,
+  ) {
+    if (invalidate) operation++;
+    sequence++;
+    worker?.terminate();
+    worker = null;
+    loaded = false;
+    if (pending) {
+      pending.reject(new Error("cancelled"));
+      pending = null;
+    }
+    busyState(false);
+    $("progress").value = 0;
+    status(message);
+  }
+  function run(type, texts = []) {
+    if (disposed) return Promise.reject(new Error("cancelled"));
+    if (busy) cancel(undefined, false);
+    const id = ++sequence;
+    busyState(true);
+    act("retry").hidden = true;
+    $("progress").removeAttribute("value");
+    status(
+      loaded
+        ? "Computing sentence embeddings locally…"
+        : "Loading the local model and runtime (about 34 MB on first use)…",
+    );
+    if (!worker) {
+      worker = new Worker(new URL("./embedding.worker.js", import.meta.url), {
+        type: "module",
+      });
+      worker.onmessage = ({ data }) => {
+        if (disposed || data.id !== sequence) return;
+        if (data.type === "progress") {
+          const p = data.progress;
+          if (p.status === "progress") {
+            status(
+              `Loading ${p.file?.includes("onnx") ? "sentence model" : p.file || "model"} · ${Math.round(p.progress || 0)}%`,
+            );
+            $("progress").value = p.progress || 0;
+          } else if (p.status === "embedding") {
+            loaded = true;
+            status(`Embedding ${p.completed} of ${p.total} locally…`);
+            $("progress").value = (p.completed / p.total) * 100;
+          }
+          return;
+        }
+        const job = pending;
+        pending = null;
+        busyState(false);
+        if (data.type === "error") {
+          worker?.terminate();
+          worker = null;
+          loaded = false;
+          act("load").hidden = false;
+          job?.reject(new Error(data.message));
+        } else {
+          if (job?.type !== "project") loaded = true;
+          act("load").hidden = loaded;
+          job?.resolve(data);
+        }
+      };
+      worker.onerror = (e) => {
+        e.preventDefault();
+        const job = pending;
+        pending = null;
+        worker?.terminate();
+        worker = null;
+        loaded = false;
+        busyState(false);
+        job?.reject(
+          new Error(
+            "The model worker could not start. Check that model and runtime assets are available, then retry.",
+          ),
+        );
+      };
+    }
+    return new Promise((resolve, reject) => {
+      pending = { resolve, reject, type };
+      worker.postMessage({ id, type, texts, assetBase });
+    });
+  }
+  function reportError(error, again) {
+    if (error.message === "cancelled" || disposed) return;
+    status(
+      `Could not complete this request. ${error.message.slice(0, 220)} Your notes are safe.`,
+      true,
+    );
+    retry = again;
+    act("retry").hidden = false;
+  }
+  function reset(id = collectionSelect.value) {
+    act("retry").hidden = true;
+    retry = null;
+    operation++;
+    if (busy) cancel(undefined, false);
+    collection = structuredClone(
+      collections.find((c) => c.id === id) || collections[0],
+    );
+    collectionSelect.value = collection.id;
+    const data = precomputed.collections[collection.id];
+    embeddings = structuredClone(data.embeddings);
+    points = structuredClone(data.points);
+    query = collection.examples[0];
+    queryInput.value = query;
+    queryVector = data.examples[query];
+    mode = "semantic";
+    zoom = 1;
+    pan = [0, 0];
+    renderExamples();
+    rank();
+    selected = ranking[0]?.index || 0;
+    render();
+    status(
+      "Precomputed example: real MiniLM embeddings, ready without a model download.",
+    );
+  }
+  function renderExamples() {
+    $("examples").replaceChildren();
+    for (const [i, q] of collection.examples.entries()) {
+      const b = el("button", "mm-example", q);
+      b.type = "button";
+      b.title = q;
+      b.dataset.example = String(i);
+      $("examples").append(b);
+    }
+  }
+  function rank() {
+    ranking =
+      mode === "semantic" && queryVector
+        ? rankSemantic(collection.notes, embeddings, queryVector)
+        : rankKeywords(collection.notes, query);
+  }
+  function render() {
+    for (const b of root.querySelectorAll("[data-mode]"))
+      b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    $("ranking-info").textContent = !query
+      ? `Browsing the collection from “${collection.notes[0].title}”. Search an idea to rank the whole collection.`
+      : mode === "semantic"
+        ? "Ranked by sentence meaning. A higher cosine score means a closer embedding."
+        : "Ranked by exact word overlap after common words are removed. Scores show shared query terms.";
+    $("map-count").textContent =
+      `${collection.notes.length} notes · ${new Set(collection.notes.map((n) => n.group)).size} groups`;
+    $("result-count").textContent = `Top ${Math.min(5, ranking.length)}`;
+    $("results").replaceChildren();
+    const matches =
+      mode === "keyword" ? ranking.filter((r) => r.score > 0) : ranking;
+    if (!matches.length) {
+      const empty = el(
+        "li",
+        "mm-empty",
+        mode === "keyword"
+          ? "No literal word matches. Try Semantic to look for related ideas."
+          : "Semantic matches appear after the model finishes.",
+      );
+      $("results").append(empty);
+    }
+    for (const [position, r] of matches.slice(0, 5).entries()) {
+      const li = el("li");
+      const b = el(
+        "button",
+        "mm-result" + (r.index === selected ? " is-selected" : ""),
+      );
+      b.dataset.index = r.index;
+      b.setAttribute("aria-pressed", String(r.index === selected));
+      const num = el(
+        "span",
+        "mm-result-number",
+        String(position + 1).padStart(2, "0"),
+      );
+      const content = el("span", "mm-result-copy");
+      content.append(
+        el("strong", "", r.note.title),
+        el("span", "mm-small", r.note.group),
+      );
+      const score = el(
+        "span",
+        "mm-score",
+        mode === "semantic"
+          ? r.score.toFixed(3)
+          : `${Math.round(r.score * 100)}%`,
+      );
+      score.title =
+        mode === "semantic" ? "Cosine similarity" : "Query word overlap";
+      b.append(num, content, score);
+      li.append(b);
+      $("results").append(li);
+    }
+    const note = collection.notes[selected];
+    const groups = [...new Set(collection.notes.map((n) => n.group))];
+    $("legend").replaceChildren(
+      ...groups.map((group, i) => {
+        const l = el("span", "mm-legend-item", group);
+        l.style.setProperty("--group", palette[i % palette.length]);
+        return l;
+      }),
+    );
+    $("detail").replaceChildren();
+    if (note) {
+      const eyebrow = el("p", "mm-eyebrow", `SELECTED NOTE / ${note.group}`);
+      const title = el("h3", "", note.title);
+      const body = el("p", "mm-note-body", note.text);
+      $("detail").append(eyebrow, title, body);
+      const related = el("div", "mm-related");
+      related.append(el("span", "mm-small", "Nearest neighbors"));
+      for (const r of rankSemantic(
+        collection.notes,
+        embeddings,
+        embeddings[selected],
+      )
+        .filter((r) => r.index !== selected)
+        .slice(0, 2)) {
+        const b = el("button", "", `${r.note.title} · ${r.score.toFixed(3)}`);
+        b.dataset.index = r.index;
+        related.append(b);
+      }
+      $("detail").append(related);
+    }
+    renderMap();
+  }
+  function screenPoints() {
+    const w = map.clientWidth,
+      h = map.clientHeight;
+    return points.map(([x, y]) => [
+      w / 2 + x * w * 0.37 * zoom + pan[0],
+      h / 2 + y * h * 0.36 * zoom + pan[1],
+    ]);
+  }
+  function renderMap() {
+    if (disposed || !points) return;
+    const w = map.clientWidth,
+      h = map.clientHeight,
+      coords = screenPoints();
+    $("nodes").replaceChildren();
+    $("labels").replaceChildren();
+    const svg = map.querySelector("svg");
+    svg.replaceChildren();
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const groups = [...new Set(collection.notes.map((n) => n.group))];
+    const related = rankSemantic(
+      collection.notes,
+      embeddings,
+      embeddings[selected],
+    )
+      .filter((r) => r.index !== selected)
+      .slice(0, 3);
+    for (const r of related) {
+      const line = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line",
+      );
+      line.setAttribute("x1", coords[selected][0]);
+      line.setAttribute("y1", coords[selected][1]);
+      line.setAttribute("x2", coords[r.index][0]);
+      line.setAttribute("y2", coords[r.index][1]);
+      svg.append(line);
+    }
+    const top = new Set(
+      ranking
+        .slice(0, 5)
+        .filter((r) => mode === "semantic" || r.score > 0)
+        .map((r) => r.index),
+    );
+    coords.forEach(([x, y], i) => {
+      const n = collection.notes[i];
+      const b = el(
+        "button",
+        "mm-node" +
+          (i === selected ? " is-selected" : "") +
+          (top.has(i) ? " is-match" : ""),
+      );
+      b.type = "button";
+      b.style.left = `${x}px`;
+      b.style.top = `${y}px`;
+      b.style.setProperty(
+        "--group",
+        palette[groups.indexOf(n.group) % palette.length],
+      );
+      b.dataset.index = i;
+      b.tabIndex = i === selected ? 0 : -1;
+      b.setAttribute(
+        "aria-label",
+        `${n.title}, ${n.group}${i === selected ? ", selected" : ""}`,
+      );
+      b.setAttribute("aria-pressed", String(i === selected));
+      b.title = n.title;
+      b.append(el("span"));
+      $("nodes").append(b);
+    });
+    const priorities = [
+      selected,
+      ...ranking.slice(0, w < 460 ? 2 : 4).map((r) => r.index),
+      ...groups.map((g) => collection.notes.findIndex((n) => n.group === g)),
+    ];
+    const occupied = [];
+    for (const i of [...new Set(priorities)].slice(0, w < 460 ? 3 : 8)) {
+      const [x, y] = coords[i];
+      if (x < 12 || x > w - 12 || y < 10 || y > h - 35) continue;
+      const title = collection.notes[i].title;
+      const width = Math.min(178, title.length * 7.1 + 14);
+      let placed = null;
+      for (const [dx, dy] of [
+        [15, -12],
+        [-width - 15, -12],
+        [15, 14],
+        [-width - 15, -36],
+        [15, -38],
+        [-width - 15, 16],
+      ]) {
+        const bx = x + dx,
+          by = y + dy;
+        if (bx < 7 || bx + width > w - 7 || by < 7 || by + 26 > h - 36)
+          continue;
+        if (
+          occupied.some(
+            (b) =>
+              bx < b.x + b.w + 7 &&
+              bx + width + 7 > b.x &&
+              by < b.y + 32 &&
+              by + 32 > b.y,
+          )
+        )
+          continue;
+        placed = { x: bx, y: by, w: width };
+        break;
+      }
+      if (placed) {
+        occupied.push(placed);
+        const label = el(
+          "span",
+          "mm-node-label" + (i === selected ? " is-selected" : ""),
+          title,
+        );
+        label.style.left = `${placed.x}px`;
+        label.style.top = `${placed.y}px`;
+        label.style.maxWidth = `${width}px`;
+        $("labels").append(label);
+      }
+    }
+  }
+  function select(index, focus = false) {
+    if (!collection.notes[index]) return;
+    selected = index;
+    render();
+    if (focus)
+      $("nodes")
+        .querySelector(`[data-index="${index}"]`)
+        ?.focus({ preventScroll: true });
+  }
+  async function search(value = queryInput.value) {
+    const text = value.trim();
+    if (!text) {
+      status("Enter an idea to search.", true);
+      queryInput.focus();
+      return;
+    }
+    const token = ++operation;
+    act("retry").hidden = true;
+    retry = null;
+    if (busy) cancel(undefined, false);
+    queryInput.value = text;
+    const cached = precomputed.collections[collection.id]?.examples[text];
+    try {
+      const vector =
+        cached ||
+        (mode === "keyword"
+          ? null
+          : (await run("embed", [text])).embeddings[0]);
+      if (disposed || token !== operation) return;
+      query = text;
+      queryVector = vector;
+      rank();
+      selected = ranking[0]?.index || 0;
+      zoom = 1;
+      pan = [0, 0];
+      render();
+      status(
+        mode === "keyword"
+          ? "Keyword results ready. Switch to Semantic to compare sentence meaning."
+          : cached
+            ? "Precomputed example: ranking uses genuine sentence embeddings."
+            : `Search complete. Your query was embedded locally with ${MODEL}.`,
+      );
+    } catch (error) {
+      if (token === operation) reportError(error, () => search(text));
+    }
+  }
+  async function addNote() {
+    const form = root.querySelector(".mm-add-form");
+    if (!form.reportValidity()) return;
+    if (collection.notes.length >= 100) {
+      status(
+        "This collection has 100 notes. Export and start a new collection to add more.",
+        true,
+      );
+      return;
+    }
+    const token = ++operation;
+    if (busy) cancel(undefined, false);
+    const values = new FormData(form);
+    const n = {
+      id: `note-${Date.now()}`,
+      title: values.get("title").trim(),
+      text: values.get("text").trim(),
+      group: values.get("group").trim(),
+    };
+    try {
+      validateCollection({ version: 1, title: collection.title, notes: [n] });
+      const result = await run("embed", [textForNote(n)]);
+      if (disposed || token !== operation) return;
+      const nextEmbeddings = [...embeddings, result.embeddings[0]];
+      const projection = await run("project", nextEmbeddings);
+      if (disposed || token !== operation) return;
+      collection.notes.push(n);
+      embeddings = nextEmbeddings;
+      points = projection.points;
+      selected = collection.notes.length - 1;
+      zoom = 1;
+      pan = [0, 0];
+      rank();
+      render();
+      form.reset();
+      form.elements.group.value = "My notes";
+      status("Note embedded and added. Export your collection to keep it.");
+    } catch (error) {
+      if (token === operation) reportError(error, () => addNote());
+    }
+  }
+  async function importFile(file) {
+    if (!file) return;
+    const token = ++operation;
+    if (busy) cancel(undefined, false);
+    try {
+      if (file.size > 500000)
+        throw new Error("Collection files must be smaller than 500 KB.");
+      const content = await file.text();
+      if (disposed || token !== operation) return;
+      const next = validateCollection(JSON.parse(content));
+      const result = await run("collection", next.notes.map(textForNote));
+      if (disposed || token !== operation) return;
+      collection = next;
+      let custom = collectionSelect.querySelector("[value=imported]");
+      if (!custom) {
+        custom = el("option");
+        custom.value = "imported";
+        collectionSelect.append(custom);
+      }
+      custom.textContent = next.title;
+      collectionSelect.value = "imported";
+      embeddings = result.embeddings;
+      points = result.points;
+      query = "";
+      queryInput.value = "";
+      queryVector = embeddings[0];
+      selected = 0;
+      zoom = 1;
+      pan = [0, 0];
+      mode = "semantic";
+      renderExamples();
+      rank();
+      render();
+      status(
+        `Imported ${next.notes.length} notes. Browse their relationships or search a new idea.`,
+      );
+    } catch (error) {
+      if (token === operation) reportError(error, () => importFile(file));
+    } finally {
+      if (token === operation) $("import").value = "";
+    }
+  }
+  on(root.querySelector(".mm-query-form"), "submit", (e) => {
+    e.preventDefault();
+    search();
+  });
+  on(root.querySelector(".mm-add-form"), "submit", (e) => {
+    e.preventDefault();
+    addNote();
+  });
+  on(collectionSelect, "change", () => reset());
+  on($("import"), "change", (e) => importFile(e.target.files[0]));
+  on(root, "click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.example !== undefined)
+      search(collection.examples[Number(b.dataset.example)]);
+    if (b.dataset.index !== undefined) {
+      const index = Number(b.dataset.index);
+      const fromMap = b.classList.contains("mm-node");
+      const fromRanking = b.classList.contains("mm-result");
+      select(index, fromMap);
+      if (fromRanking)
+        $("results")
+          .querySelector('[data-index="' + index + '"]')
+          ?.focus({ preventScroll: true });
+      else if (!fromMap) {
+        const heading = $("detail").querySelector("h3");
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
+    if (b.dataset.mode) {
+      mode = b.dataset.mode;
+      if (mode === "semantic" && query && !queryVector) {
+        ranking = [];
+        render();
+        search(query);
+      } else {
+        rank();
+        render();
+      }
+    }
+    switch (b.dataset.action) {
+      case "cancel":
+        cancel();
+        break;
+      case "retry":
+        retry?.();
+        break;
+      case "load": {
+        const load = () =>
+          run("load")
+            .then(() =>
+              status(
+                "Model is ready. Fresh text now runs entirely in your browser.",
+              ),
+            )
+            .catch((e) => reportError(e, load));
+        load();
+        break;
+      }
+      case "zoom-in":
+        zoom = Math.min(3, zoom * 1.3);
+        renderMap();
+        break;
+      case "zoom-out":
+        zoom = Math.max(0.65, zoom / 1.3);
+        renderMap();
+        break;
+      case "fit":
+        zoom = 1;
+        pan = [0, 0];
+        renderMap();
+        break;
+      case "reset":
+        reset();
+        break;
+      case "export": {
+        const blob = new Blob([serializeCollection(collection)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = el("a");
+        a.href = url;
+        a.download = "meaning-map-collection.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        status(
+          "Collection exported as validated, portable text. Embeddings regenerate on import.",
+        );
+        break;
+      }
+    }
+  });
+  on(map, "keydown", (e) => {
+    const key = e.key;
+    const index = e.target.dataset.index;
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(key)) {
+      e.preventDefault();
+      if (index !== undefined) {
+        const coords = screenPoints(),
+          a = coords[Number(index)],
+          dir = {
+            ArrowLeft: [-1, 0],
+            ArrowRight: [1, 0],
+            ArrowUp: [0, -1],
+            ArrowDown: [0, 1],
+          }[key];
+        const candidates = coords
+          .map((p, i) => ({ i, dx: p[0] - a[0], dy: p[1] - a[1] }))
+          .filter((p) => p.dx * dir[0] + p.dy * dir[1] > 1)
+          .sort(
+            (a, b) =>
+              Math.hypot(a.dx, a.dy) +
+              Math.abs(a.dx * dir[1] - a.dy * dir[0]) -
+              (Math.hypot(b.dx, b.dy) +
+                Math.abs(b.dx * dir[1] - b.dy * dir[0])),
+          );
+        if (candidates[0]) select(candidates[0].i, true);
+      } else {
+        const [x, y] = {
+          ArrowLeft: [30, 0],
+          ArrowRight: [-30, 0],
+          ArrowUp: [0, 30],
+          ArrowDown: [0, -30],
+        }[key];
+        pan = [pan[0] + x, pan[1] + y];
+        renderMap();
+      }
+    } else if (key === "+" || key === "=" || key === "-") {
+      e.preventDefault();
+      zoom = Math.max(0.65, Math.min(3, zoom * (key === "-" ? 1 / 1.3 : 1.3)));
+      renderMap();
+    } else if ((key === "Enter" || key === " ") && index !== undefined) {
+      e.preventDefault();
+      select(Number(index), true);
+    }
+  });
+  on(map, "pointerdown", (e) => {
+    if (
+      e.pointerType !== "mouse" ||
+      e.button !== 0 ||
+      e.target.closest("button")
+    )
+      return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, pan: [...pan] };
+    map.setPointerCapture(e.pointerId);
+  });
+  on(map, "pointermove", (e) => {
+    if (!drag) return;
+    pan = [drag.pan[0] + e.clientX - drag.x, drag.pan[1] + e.clientY - drag.y];
+    renderMap();
+  });
+  const stopDrag = () => {
+    if (drag && map.hasPointerCapture(drag.id))
+      map.releasePointerCapture(drag.id);
+    drag = null;
+  };
+  on(map, "pointerup", stopDrag);
+  on(map, "pointercancel", stopDrag);
+  on(document, "visibilitychange", () => {
+    if (document.hidden && busy)
+      cancel(
+        "Paused while this tab is hidden. Retry the action when you return.",
+      );
+  });
+  const observer = new ResizeObserver(() => renderMap());
+  observer.observe(map);
+  cleanups.push(() => observer.disconnect());
+  if (typeof IntersectionObserver !== "undefined") {
+    const visibility = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting && busy)
+          cancel(
+            "Paused while the experiment is off screen. Your collection is unchanged.",
+          );
+      },
+      { rootMargin: "500px" },
+    );
+    visibility.observe(root);
+    cleanups.push(() => visibility.disconnect());
+  }
+  reset();
+  return {
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      stopDrag();
+      cancel();
+      for (const cleanup of cleanups) cleanup();
+      root.remove();
+    },
+  };
+}
